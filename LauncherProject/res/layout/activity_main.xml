@@ -6,21 +6,41 @@
     android:padding="30dp"
     android:background="@drawable/premium_bg">
 
-    <!-- 顶部标题：仅保留主标题 -->
-    <TextView
-        android:layout_width="wrap_content"
+    <!-- 顶部标题栏 -->
+    <RelativeLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="极简桌面"
-        android:textColor="@color/text_main"
-        android:textSize="26sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="20dp" />
+        android:layout_marginBottom="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="微镜极简桌面"
+            android:textColor="@color/text_main"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            android:layout_alignParentLeft="true" />
+
+        <!-- 建议 2：顶部 Wi-Fi 状态指示图，支持聚焦和点击 -->
+        <ImageView
+            android:id="@+id/iv_wifi_status"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/app_item_selector"
+            android:focusable="true"
+            android:clickable="true"
+            android:padding="4dp"
+            android:src="@android:drawable/ic_dialog_info" />
+
+    </RelativeLayout>
 
     <!-- 直达与信号源行标签 -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="直达与信号源"
+        android:text="直达与信号源 (长按系统设置可一键恢复原厂桌面组件)"
         android:textColor="@color/text_sub"
         android:textSize="14sp"
         android:textStyle="bold"
@@ -44,7 +64,6 @@
             android:clickable="true"
             android:orientation="vertical"
             android:padding="18dp">
-            <!-- 用来强制 4:3 比例的占位辅助，但在电视布局里通过固定比重即可 -->
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="130dp">
@@ -167,7 +186,7 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- 应用抽屉行：保留 6 个固定常用位，长按可自定义 -->
+    <!-- 应用抽屉行 -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

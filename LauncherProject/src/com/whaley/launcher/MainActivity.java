@@ -2,15 +2,20 @@ package com.whaley.launcher;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.Gravity;
@@ -31,7 +36,7 @@ public class MainActivity extends Activity {
 
     private static final String PREFS_NAME = "LauncherPrefs";
     private static final String KEY_DEFAULT_SOURCE = "default_source"; 
-    private static final String KEY_PINNED_APPS_PREFIX = "pinned_app_slot_"; // 保存5个自定义槽位包名
+    private static final String KEY_PINNED_APPS_PREFIX = "pinned_app_slot_"; 
     
     private LinearLayout cardHdmi1;
     private LinearLayout cardHdmi2;
@@ -44,9 +49,13 @@ public class MainActivity extends Activity {
     
     private TextView tvCountdown;
     private ProgressBar progressBar;
-    private LinearLayout countdownContainer; // 倒计时容器
+    private LinearLayout countdownContainer; 
     
     private LinearLayout appsContainer;
+    
+    // Wi-Fi 状态图标组件
+    private ImageView ivWifiStatus;
+    private WifiReceiver wifiReceiver;
 
     private int defaultSourceIndex = 1; 
     private int secondsLeft = 5;
@@ -57,7 +66,6 @@ public class MainActivity extends Activity {
     private static final int TOTAL_DURATION_MS = 5000;
     private static final int INTERVAL_MS = 50;
 
-    // 已安装的所有应用缓存
     private List<AppInfoModel> allInstalledApps = new ArrayList<AppInfoModel>();
 
     @Override
@@ -80,13 +88,15 @@ public class MainActivity extends Activity {
         countdownContainer = (LinearLayout) findViewById(R.id.countdown_container);
         
         appsContainer = (LinearLayout) findViewById(R.id.apps_container);
+        
+        ivWifiStatus = (ImageView) findViewById(R.id.iv_wifi_status);
 
-        // 读取保存的默认信号源
+        // 读取默认源配置
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         defaultSourceIndex = prefs.getInt(KEY_DEFAULT_SOURCE, 1); 
         updateStarIndicators();
 
-        // 监听焦点以自动暂停倒计时
+        // 监听焦点自动暂停倒计时
         View.OnFocusChangeListener focusListener = new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
@@ -99,8 +109,9 @@ public class MainActivity extends Activity {
         cardHdmi2.setOnFocusChangeListener(focusListener);
         cardAv.setOnFocusChangeListener(focusListener);
         cardSettings.setOnFocusChangeListener(focusListener);
+        ivWifiStatus.setOnFocusChangeListener(focusListener);
 
-        // 设置点击事件
+        // 信号源点击
         cardHdmi1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -126,7 +137,7 @@ public class MainActivity extends Activity {
             }
         });
 
-        // 设置长按设置默认信号源
+        // 信号源长按绑定默认开机源
         View.OnLongClickListener longClickListener = new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
@@ -145,17 +156,32 @@ public class MainActivity extends Activity {
         cardHdmi2.setOnLongClickListener(longClickListener);
         cardAv.setOnLongClickListener(longClickListener);
 
-        // 预载全部应用信息
-        scanAllApps();
-        
-        // 渲染并固定 5个自定义 + 1个全部应用
-        renderAppShelf();
+        // 建议 4：长按“系统设置”卡片，弹出防砖一键激活官方桌面选项
+        cardSettings.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                showRestoreHeliosLauncherDialog();
+                return true;
+            }
+        });
 
-        // 启动自启倒计时
+        // 建议 2：点击 Wi-Fi 图标直接进入系统网络设置
+        ivWifiStatus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                launchWifiSettings();
+            }
+        });
+
+        // 动态广播注册，实时刷新 Wi-Fi 强度图标
+        registerWifiReceiver();
+
+        scanAllApps();
+        renderAppShelf();
         startCountdown();
     }
 
-    // 设置默认开机信号源
+    // 设置开机默认信号源
     private void setDefaultSource(int index) {
         defaultSourceIndex = index;
         SharedPreferences.Editor editor = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit();
@@ -174,7 +200,6 @@ public class MainActivity extends Activity {
         starAv.setVisibility(defaultSourceIndex == 2 ? View.VISIBLE : View.GONE);
     }
 
-    // 开启倒计时
     private void startCountdown() {
         progressBar.setMax(TOTAL_DURATION_MS);
         progressBar.setProgress(TOTAL_DURATION_MS);
@@ -204,7 +229,6 @@ public class MainActivity extends Activity {
         handler.postDelayed(countdownRunnable, INTERVAL_MS);
     }
 
-    // 暂停/取消倒计时，按需求隐藏掉整个倒计时栏，不显字
     private void cancelCountdown() {
         if (isCountdownCancelled) return;
         isCountdownCancelled = true;
@@ -212,7 +236,101 @@ public class MainActivity extends Activity {
         countdownContainer.setVisibility(View.GONE);
     }
 
-    // 扫描系统中的应用列表
+    // 建议 4：弹窗恢复官方原厂桌面组件，免 Root 自救
+    private void showRestoreHeliosLauncherDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("⚠️ 桌面自救防砖选项");
+        builder.setMessage("是否确认重新启用原厂的官方 [微鲸 Helios 桌面]？\n\n重新启用后，点击主页键您可以自由选择切换回原厂官方桌面。");
+        builder.setPositiveButton("确认启用", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                try {
+                    // 动态启用原厂桌面核心组件
+                    PackageManager pm = getPackageManager();
+                    ComponentName comp = new ComponentName("com.helios.launcher", "com.helios.launcher.Launcher");
+                    pm.setComponentEnabledSetting(
+                            comp,
+                            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                            PackageManager.DONT_KILL_APP
+                    );
+                    Toast.makeText(MainActivity.this, "🎉 原厂官方桌面已成功启用！可以点按主页键返回原厂系统。", Toast.LENGTH_LONG).show();
+                } catch (Exception e) {
+                    Toast.makeText(MainActivity.this, "启用失败，包名冲突或系统已彻底清除: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+        builder.setNegativeButton("取消", null);
+        builder.create().show();
+    }
+
+    // 建议 2：广播实时监听网络 Wi-Fi 信号强度更新
+    private void registerWifiReceiver() {
+        wifiReceiver = new WifiReceiver();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(WifiManager.RSSI_CHANGED_ACTION);
+        filter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
+        filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
+        registerReceiver(wifiReceiver, filter);
+        updateWifiStatusIcon(); // 首次主动触发
+    }
+
+    private void updateWifiStatusIcon() {
+        try {
+            WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+            if (wifiManager == null) return;
+            
+            if (!wifiManager.isWifiEnabled()) {
+                ivWifiStatus.setImageResource(android.R.drawable.presence_busy); // 红色忙碌圆点表示断开
+                ivWifiStatus.setColorFilter(Color.parseColor("#ef4444"));
+                return;
+            }
+
+            WifiInfo info = wifiManager.getConnectionInfo();
+            if (info != null && info.getNetworkId() != -1) {
+                ivWifiStatus.setImageResource(android.R.drawable.presence_online); // 绿色表示连接正常
+                ivWifiStatus.setColorFilter(Color.parseColor("#10b981")); 
+            } else {
+                ivWifiStatus.setImageResource(android.R.drawable.presence_away); // 橙色表示有信号但无外网
+                ivWifiStatus.setColorFilter(Color.parseColor("#f59e0b")); 
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private class WifiReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            updateWifiStatusIcon();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (wifiReceiver != null) {
+            unregisterReceiver(wifiReceiver);
+        }
+    }
+
+    // 建议 2：直接拉起系统网络设置
+    private void launchWifiSettings() {
+        cancelCountdown();
+        try {
+            Intent intent = new Intent(android.provider.Settings.ACTION_WIFI_SETTINGS);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        } catch (Exception e) {
+            try {
+                Intent intent = new Intent(android.provider.Settings.ACTION_SETTINGS);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            } catch (Exception ex) {
+                Toast.makeText(this, "打开网络设置失败: " + ex.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
     private void scanAllApps() {
         allInstalledApps.clear();
         PackageManager pm = getPackageManager();
@@ -240,17 +358,14 @@ public class MainActivity extends Activity {
         }
     }
 
-    // 渲染常用位与全部应用
     private void renderAppShelf() {
         appsContainer.removeAllViews();
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
 
-        // 1. 动态生成 5 个自定义槽位
         for (int i = 0; i < 5; i++) {
             final int slotIndex = i;
             String savedPkg = prefs.getString(KEY_PINNED_APPS_PREFIX + slotIndex, null);
             
-            // 默认兜底：如果没有配置，则取系统扫描到的前几个
             if (savedPkg == null && allInstalledApps.size() > slotIndex) {
                 savedPkg = allInstalledApps.get(slotIndex).packageName;
             }
@@ -265,7 +380,6 @@ public class MainActivity extends Activity {
                 }
             }
 
-            // 如果该应用已被卸载，使用第一个存在的应用兜底
             if (activeApp == null && !allInstalledApps.isEmpty()) {
                 activeApp = allInstalledApps.get(0);
             }
@@ -274,12 +388,10 @@ public class MainActivity extends Activity {
             appsContainer.addView(appItemView);
         }
 
-        // 2. 加载第 6 个固定位：全部应用
         View allAppsButton = createAllAppsButton();
         appsContainer.addView(allAppsButton);
     }
 
-    // 创建单个卡片的 View 结构 (包含 64dp 大图标布局与长按监听)
     private View createAppItemView(final AppInfoModel app, final int slotIndex) {
         LinearLayout appItem = new LinearLayout(this);
         appItem.setOrientation(LinearLayout.VERTICAL);
@@ -288,14 +400,12 @@ public class MainActivity extends Activity {
         appItem.setClickable(true);
         appItem.setBackgroundResource(R.drawable.app_item_selector);
         
-        // 110dp 宽度自适应
         int itemWidthPx = (int) (110 * getResources().getDisplayMetrics().density);
         LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(itemWidthPx, ViewGroup.LayoutParams.WRAP_CONTENT);
         itemParams.setMargins(10, 10, 10, 10);
         appItem.setLayoutParams(itemParams);
         appItem.setPadding(10, 15, 10, 15);
 
-        // 图标：改为 64dp (64 * density)
         ImageView ivIcon = new ImageView(this);
         if (app != null) {
             ivIcon.setImageDrawable(app.icon);
@@ -307,7 +417,6 @@ public class MainActivity extends Activity {
         ivIcon.setLayoutParams(iconParams);
         appItem.addView(ivIcon);
 
-        // 标题
         TextView tvName = new TextView(this);
         tvName.setText(app != null ? app.label : "待自定义");
         tvName.setTextColor(Color.parseColor("#9ca3af"));
@@ -322,7 +431,6 @@ public class MainActivity extends Activity {
         tvName.setLayoutParams(nameParams);
         appItem.addView(tvName);
 
-        // 点击逻辑
         appItem.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -342,7 +450,6 @@ public class MainActivity extends Activity {
             }
         });
 
-        // 长按遥控器 OK / 确认键进行更换应用逻辑
         appItem.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
@@ -351,7 +458,6 @@ public class MainActivity extends Activity {
             }
         });
 
-        // 聚焦动画
         appItem.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
@@ -367,7 +473,6 @@ public class MainActivity extends Activity {
         return appItem;
     }
 
-    // 全部应用按纽
     private View createAllAppsButton() {
         LinearLayout appItem = new LinearLayout(this);
         appItem.setOrientation(LinearLayout.VERTICAL);
@@ -383,7 +488,7 @@ public class MainActivity extends Activity {
         appItem.setPadding(10, 15, 10, 15);
 
         ImageView ivIcon = new ImageView(this);
-        ivIcon.setImageResource(android.R.drawable.ic_menu_manage); // 默认灰色齿轮/网格图标
+        ivIcon.setImageResource(android.R.drawable.ic_menu_manage); 
         ivIcon.setColorFilter(Color.parseColor("#888899"));
         int iconSizePx = (int) (64 * getResources().getDisplayMetrics().density);
         LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(iconSizePx, iconSizePx);
@@ -425,7 +530,6 @@ public class MainActivity extends Activity {
         return appItem;
     }
 
-    // 弹出自定义更换的 AlertDialog 应用选择框
     private void openAppSelectionDialog(final int slotIndex) {
         if (allInstalledApps.isEmpty()) {
             Toast.makeText(this, "未找到其他已安装应用", Toast.LENGTH_SHORT).show();
@@ -444,12 +548,10 @@ public class MainActivity extends Activity {
             public void onClick(DialogInterface dialog, int which) {
                 AppInfoModel selectedApp = allInstalledApps.get(which);
                 
-                // 写入 Preference 存盘
                 SharedPreferences.Editor editor = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit();
                 editor.putString(KEY_PINNED_APPS_PREFIX + slotIndex, selectedApp.packageName);
                 editor.apply();
 
-                // 重新渲染底栏
                 renderAppShelf();
                 Toast.makeText(MainActivity.this, "已成功固定: " + selectedApp.label, Toast.LENGTH_SHORT).show();
             }
@@ -457,20 +559,17 @@ public class MainActivity extends Activity {
         builder.create().show();
     }
 
-    // 弹出“全部应用”全屏网格列表直接启动
     private void openAllAppsSelectorDialog() {
         if (allInstalledApps.isEmpty()) {
             Toast.makeText(this, "未找到已安装应用", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // 创建一个全屏无边框的 Dialog
         final android.app.Dialog dialog = new android.app.Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
         dialog.setContentView(R.layout.dialog_all_apps);
         
         android.widget.GridView gridView = (android.widget.GridView) dialog.findViewById(R.id.apps_grid);
         
-        // 设置适配器把应用数据放入 Grid 列表中
         gridView.setAdapter(new android.widget.BaseAdapter() {
             @Override
             public int getCount() {
@@ -491,8 +590,6 @@ public class MainActivity extends Activity {
             public View getView(int position, View convertView, ViewGroup parent) {
                 final AppInfoModel app = allInstalledApps.get(position);
                 
-                // 动态构建单个应用项目的布局，直接重用主页的卡片生成逻辑
-                // 开启 focusable，并移去 duplicateParentState 以允许独立焦点变色
                 LinearLayout itemView = new LinearLayout(MainActivity.this);
                 itemView.setOrientation(LinearLayout.VERTICAL);
                 itemView.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -503,7 +600,6 @@ public class MainActivity extends Activity {
                 itemView.setLayoutParams(new android.widget.AbsListView.LayoutParams(itemWidthPx, ViewGroup.LayoutParams.WRAP_CONTENT));
                 itemView.setPadding(10, 15, 10, 15);
 
-                // 图标
                 ImageView ivIcon = new ImageView(MainActivity.this);
                 ivIcon.setImageDrawable(app.icon);
                 int iconSizePx = (int) (64 * getResources().getDisplayMetrics().density);
@@ -511,7 +607,6 @@ public class MainActivity extends Activity {
                 ivIcon.setLayoutParams(iconParams);
                 itemView.addView(ivIcon);
 
-                // 名称
                 TextView tvName = new TextView(MainActivity.this);
                 tvName.setText(app.label);
                 tvName.setTextColor(Color.parseColor("#9ca3af"));
@@ -526,7 +621,6 @@ public class MainActivity extends Activity {
                 tvName.setLayoutParams(nameParams);
                 itemView.addView(tvName);
 
-                // 焦点高亮改变字体颜色 (需要手动控制一下 GridView 中文字变白，避免受主题颜色影响)
                 itemView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
                     @Override
                     public void onFocusChange(View v, boolean hasFocus) {
@@ -542,7 +636,6 @@ public class MainActivity extends Activity {
             }
         });
 
-        // 统一在 GridView 的 onItemClickListener 中处理启动，避免冲突
         gridView.setOnItemClickListener(new android.widget.AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(android.widget.AdapterView<?> parent, View view, int position, long id) {
@@ -560,24 +653,6 @@ public class MainActivity extends Activity {
         });
 
         dialog.show();
-    }
-
-    // 广播反射跳转信号源
-    private void setWhaleyInputSource(String sourceEnumName) {
-        try {
-            Context tvPlayerContext = createPackageContext("com.whaley.tv.tvplayer.ui",
-                    Context.CONTEXT_INCLUDE_CODE | Context.CONTEXT_IGNORE_SECURITY);
-            ClassLoader classLoader = tvPlayerContext.getClassLoader();
-            Class<?> managerClass = classLoader.loadClass("tv.whaley.api.manager.WtvApiInputSourceManger");
-            Method getInstanceMethod = managerClass.getMethod("getInstance");
-            Object managerInstance = getInstanceMethod.invoke(null);
-            Class<?> enumClass = classLoader.loadClass("tv.whaley.api.mode.EnumWtvInputSource");
-            Object enumVal = Enum.valueOf((Class<Enum>) enumClass, sourceEnumName);
-            Method setCurrentInputSourceMethod = managerClass.getMethod("setCurrentInputSource", enumClass);
-            setCurrentInputSourceMethod.invoke(managerInstance, enumVal);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     private void launchTvPlayer(final String sourceName) {
@@ -631,16 +706,12 @@ public class MainActivity extends Activity {
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         cancelCountdown();
-        
-        // 关键修复：如果在桌面按返回键，直接拦截并消费，防止桌面 Activity 退出或重启闪烁
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             return true; 
         }
-        
         return super.onKeyDown(keyCode, event);
     }
 
-    // 应用信息临时实体模型
     public static class AppInfoModel {
         public String packageName;
         public String label;

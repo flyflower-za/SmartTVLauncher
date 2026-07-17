@@ -37,11 +37,12 @@ public final class R {
     public static final int card_hdmi2=0x7f030004;
     public static final int card_settings=0x7f030005;
     public static final int countdown_container=0x7f030006;
-    public static final int progress_bar=0x7f030007;
-    public static final int star_av=0x7f030008;
-    public static final int star_hdmi1=0x7f030009;
-    public static final int star_hdmi2=0x7f03000a;
-    public static final int tv_countdown=0x7f03000b;
+    public static final int iv_wifi_status=0x7f030007;
+    public static final int progress_bar=0x7f030008;
+    public static final int star_av=0x7f030009;
+    public static final int star_hdmi1=0x7f03000a;
+    public static final int star_hdmi2=0x7f03000b;
+    public static final int tv_countdown=0x7f03000c;
   }
   public static final class layout {
     public static final int activity_main=0x7f040000;
