@@ -28,6 +28,8 @@ public final class R {
     public static final int card_normal=0x7f020005;
     public static final int card_selector=0x7f020006;
     public static final int premium_bg=0x7f020007;
+    public static final int wifi_offline=0x7f020008;
+    public static final int wifi_online=0x7f020009;
   }
   public static final class id {
     public static final int apps_container=0x7f030000;

@@ -280,18 +280,18 @@ public class MainActivity extends Activity {
             if (wifiManager == null) return;
             
             if (!wifiManager.isWifiEnabled()) {
-                ivWifiStatus.setImageResource(android.R.drawable.presence_busy); // 红色忙碌圆点表示断开
-                ivWifiStatus.setColorFilter(Color.parseColor("#ef4444"));
+                ivWifiStatus.setImageResource(R.drawable.wifi_offline); // 使用本地断网图标
+                ivWifiStatus.setColorFilter(Color.parseColor("#ef4444")); // 红色
                 return;
             }
 
             WifiInfo info = wifiManager.getConnectionInfo();
             if (info != null && info.getNetworkId() != -1) {
-                ivWifiStatus.setImageResource(android.R.drawable.presence_online); // 绿色表示连接正常
-                ivWifiStatus.setColorFilter(Color.parseColor("#10b981")); 
+                ivWifiStatus.setImageResource(R.drawable.wifi_online); // 使用本地联网图标
+                ivWifiStatus.setColorFilter(Color.parseColor("#10b981")); // 绿色正常
             } else {
-                ivWifiStatus.setImageResource(android.R.drawable.presence_away); // 橙色表示有信号但无外网
-                ivWifiStatus.setColorFilter(Color.parseColor("#f59e0b")); 
+                ivWifiStatus.setImageResource(R.drawable.wifi_offline); 
+                ivWifiStatus.setColorFilter(Color.parseColor("#f59e0b")); // 橙色警告
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -317,17 +317,12 @@ public class MainActivity extends Activity {
     private void launchWifiSettings() {
         cancelCountdown();
         try {
-            Intent intent = new Intent(android.provider.Settings.ACTION_WIFI_SETTINGS);
+            // 尝试打开系统通用设置，这对电视兼容性最好
+            Intent intent = new Intent(android.provider.Settings.ACTION_SETTINGS);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
         } catch (Exception e) {
-            try {
-                Intent intent = new Intent(android.provider.Settings.ACTION_SETTINGS);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
-            } catch (Exception ex) {
-                Toast.makeText(this, "打开网络设置失败: " + ex.getMessage(), Toast.LENGTH_SHORT).show();
-            }
+            Toast.makeText(this, "打开设置失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
