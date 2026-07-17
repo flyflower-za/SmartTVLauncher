@@ -1,4 +1,4 @@
-# Whaley TV Minimalist Launcher (微镜极简电视桌面)
+# Whaley TV Minimalist Launcher (微鲸极简电视桌面)
 
 一个专为 **微鲸智能电视 (Android 5.0.2 / Mstar 芯片平台)** 打造的**极简直达桌面**。能够开机自启、倒计时直达默认信号源，并完美替换原厂臃肿、带有广告的系统桌面。
 
