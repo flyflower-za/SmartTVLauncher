@@ -47,4 +47,37 @@ adb connect <你的电视IP>:5555
 adb install -r -d SmartInputLauncher.apk
 ```
 
+---
+
+## ⚡ 电视系统瘦身与桌面接管指南 (ADB 实战)
+
+为了让“微镜极简桌面”完美替代原厂桌面，并彻底消除开机广告、解决老旧电视卡顿，强烈建议在连接 ADB 后，运行以下命令禁用微鲸系统底层的臃肿组件与广告模块：
+
+### 1. 彻底禁用原厂桌面与开机广告
+```bash
+# 禁用原厂广告与桌面组件，执行后按 Home 键将直接永久启动“微镜极简桌面”
+adb shell pm disable-user com.helios.launcher                # 禁用原厂 Helios 桌面
+adb shell pm disable-user com.whaley.tv.guide                # 禁用原厂开机引导/广告
+adb shell pm disable-user com.whaley.tv.startupad            # 禁用开机广告服务
+```
+
+### 2. 禁用无用及臃肿系统后台（可选精简）
+```bash
+# 禁用系统多余的后台统计、云服务和升级程序，能省出约 200MB+ 内存运行空间
+adb shell pm disable-user com.whaley.tv.recommend            # 禁用原厂推荐服务
+adb shell pm disable-user com.whaley.tv.member               # 禁用会员中心组件
+adb shell pm disable-user com.whaley.tv.update               # 禁用系统强制自动升级
+adb shell pm disable-user com.whaley.market.assist          # 禁用当贝辅助应用
+```
+
+### 3. 如何恢复原厂状态（防砖回滚命令）
+如果以后想恢复微鲸原厂桌面，随时运行以下命令即可：
+```bash
+adb shell pm enable com.helios.launcher
+adb shell pm enable com.whaley.tv.guide
+adb shell pm enable com.whaley.tv.startupad
+```
+
+---
+
 项目代码基于 Android Open Source Project 规范编写，欢迎大家提交 PR 或者 issue 共同打磨！
