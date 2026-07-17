@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg_color">#060813</color>
+    <color name="text_main">#f3f4f6</color>
+    <color name="text_sub">#9ca3af</color>
+    <color name="accent_color">#00f2fe</color>
+    <color name="card_focused_bg">#1000f2fe</color>
+    <color name="card_default_bg">#08ffffff</color>
+    <color name="card_border_default">#15ffffff</color>
+    <color name="card_border_focused">#00f2fe</color>
+    <color name="star_color">#ffd700</color>
+</resources>

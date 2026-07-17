@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>极简桌面</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+SC:wght@300;400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-color: #050711;
+      --card-bg: rgba(255, 255, 255, 0.03);
+      --card-border: rgba(255, 255, 255, 0.07);
+      --text-main: #f3f4f6;
+      --text-sub: #9ca3af;
+      --accent-color: #00f2fe;
+      --accent-glow: rgba(0, 242, 254, 0.35);
+      --accent-grad: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+      --active-card-bg: rgba(0, 242, 254, 0.06);
+      --star-color: #ffd700;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+    body {
+      font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+      background-color: var(--bg-color);
+      background-image: url('premium_bg.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 30px 40px;
+      overflow: hidden;
+    }
+
+    /* ── 顶部标题 ── */
+    .page-title {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 28px;
+      color: var(--text-main);
+      animation: fadeInDown 0.6s ease both;
+    }
+
+    /* ── 行标题 ── */
+    .row-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .row-label::before {
+      content: '';
+      width: 3px;
+      height: 14px;
+      background: var(--accent-grad);
+      border-radius: 2px;
+    }
+
+    /* ── 信号源卡片行 ── */
+    .cards-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 28px;
+      animation: zoomIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+    }
+
+    .card {
+      flex: 1;
+      aspect-ratio: 4 / 3;
+      min-height: 180px; /* 确保电视大屏幕上卡片有足够高度 */
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(20px);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    }
+
+    .card.focused {
+      transform: scale(1.04) translateY(-2px);
+      background: var(--active-card-bg);
+      border-color: var(--accent-color);
+      box-shadow: 0 16px 32px rgba(0, 242, 254, 0.12), 0 0 20px var(--accent-glow);
+    }
+
+    .card.focused::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 100%; height: 3px;
+      background: var(--accent-grad);
+    }
+
+    /* 默认徽章 */
+    .default-badge {
+      position: absolute;
+      top: 14px; right: 14px;
+      background: rgba(255, 215, 0, 0.12);
+      border: 1px solid rgba(255, 215, 0, 0.5);
+      border-radius: 10px;
+      padding: 3px 8px;
+      font-size: 11px;
+      color: var(--star-color);
+      font-weight: 600;
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: all 0.25s;
+    }
+    .card.is-default .default-badge {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* 卡片标题（底部对齐，仅保留名称）*/
+    .card-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-top: auto;
+    }
+
+    /* ── 应用抽屉行：改为自适应多行网格 ── */
+    .apps-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 16px;
+      padding: 10px 4px;
+      animation: fadeInUp 0.5s ease 0.2s both;
+    }
+
+    .app-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      padding: 12px 8px;
+      border-radius: 16px;
+      border: 1px solid transparent;
+      transition: all 0.25s;
+    }
+    .app-item.focused {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.1);
+      transform: scale(1.08);
+    }
+
+    .app-icon {
+      width: 64px; height: 64px;
+      border-radius: 16px;
+      background: #131629;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      transition: all 0.25s;
+    }
+    .app-item.focused .app-icon {
+      box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+      border: 1.5px solid var(--accent-color);
+    }
+    .app-icon svg { width: 32px; height: 32px; fill: #fff; }
+
+    .app-name {
+      font-size: 12px;
+      color: var(--text-sub);
+      text-align: center;
+      width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: color 0.2s;
+    }
+    .app-item.focused .app-name { color: #fff; font-weight: 600; }
+
+    /* ── 倒计时区域 ── */
+    .footer-countdown {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      animation: fadeInUp 0.5s ease 0.3s both;
+      padding-bottom: 4px;
+      transition: opacity 0.4s ease;
+    }
+    .footer-countdown.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .countdown-text {
+      font-size: 14px;
+      color: var(--text-sub);
+      font-weight: 300;
+    }
+    .countdown-text span { color: var(--accent-color); font-weight: 600; }
+
+    .progress-track {
+      width: 300px; height: 3px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent-grad);
+      transform-origin: left;
+      transition: transform 0.1s linear;
+    }
+
+    /* ── 操作提示条（仅桌面预览） ── */
+    .keyboard-hint {
+      position: fixed;
+      bottom: 18px;
+      font-size: 11px;
+      color: rgba(0, 242, 254, 0.55);
+      background: rgba(0, 242, 254, 0.05);
+      padding: 5px 16px;
+      border-radius: 20px;
+      border: 1px solid rgba(0, 242, 254, 0.12);
+      animation: fadeInUp 1s ease 0.5s both;
+    }
+
+    /* ── Toast 提示 ── */
+    .toast {
+      position: fixed;
+      bottom: 60px;
+      background: rgba(10, 12, 25, 0.92);
+      border: 1px solid rgba(255, 215, 0, 0.25);
+      color: #fff;
+      padding: 9px 22px;
+      border-radius: 28px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 1000;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    /* ── 跳转遮罩 ── */
+    .transition-overlay {
+      position: fixed; top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(5, 7, 17, 0.96);
+      z-index: 999;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      gap: 20px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.35s ease;
+    }
+    .transition-overlay.active { opacity: 1; pointer-events: auto; }
+
+    .spinner {
+      width: 50px; height: 50px;
+      border: 3px solid rgba(0, 242, 254, 0.12);
+      border-left-color: var(--accent-color);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    .transition-text { font-size: 15px; color: var(--text-sub); letter-spacing: 0.5px; }
+
+    /* ── 动画 ── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes zoomIn { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+  </style>
+</head>
+<body>
+
+  <!-- 顶部标题：仅保留主标题 -->
+  <h1 class="page-title">极简桌面</h1>
+
+  <!-- 直达与信号源 -->
+  <div class="row-label">直达与信号源</div>
+  <div class="cards-row" id="source-row">
+
+    <!-- HDMI 1 -->
+    <div class="card item-nav" data-name="HDMI 1">
+      <div class="default-badge">⭐ 默认</div>
+      <span class="card-title">HDMI 1</span>
+    </div>
+
+    <!-- HDMI 2 (默认) -->
+    <div class="card item-nav is-default" data-name="HDMI 2">
+      <div class="default-badge">⭐ 默认</div>
+      <span class="card-title">HDMI 2</span>
+    </div>
+
+    <!-- AV -->
+    <div class="card item-nav" data-name="AV">
+      <div class="default-badge">⭐ 默认</div>
+      <span class="card-title">AV</span>
+    </div>
+
+    <!-- 系统设置 -->
+    <div class="card item-nav" data-name="系统设置">
+      <div class="default-badge">⭐ 默认</div>
+      <span class="card-title">系统设置</span>
+    </div>
+
+  </div>
+
+  <!-- 已安装应用 -->
+  <div class="row-label">已安装应用 (按 Space 空格键可自定义更换)</div>
+  <div class="apps-container" id="apps-row">
+    <!-- 5 个自定义常用应用槽位，默认数据由 JS 动态渲染 -->
+    <div id="app-slot-0" class="app-item item-nav" data-index="0"></div>
+    <div id="app-slot-1" class="app-item item-nav" data-index="1"></div>
+    <div id="app-slot-2" class="app-item item-nav" data-index="2"></div>
+    <div id="app-slot-3" class="app-item item-nav" data-index="3"></div>
+    <div id="app-slot-4" class="app-item item-nav" data-index="4"></div>
+
+    <!-- 第 6 个固定位：全部应用入口 -->
+    <div class="app-item item-nav" data-name="全部应用" id="all-apps-btn">
+      <div class="app-icon" style="background-color:#4e4e5e;">
+        <svg viewBox="0 0 24 24"><path d="M4,5H7V8H4V5M9,5H12V8H9V5M14,5H17V8H14V5M4,10H7V13H4V10M9,10H12V13H9V10M14,10H17V13H14V10M4,15H7V18H4V15M9,15H12V18H9V15M14,15H17V18H14V15Z"/></svg>
+      </div>
+      <div class="app-name">全部应用</div>
+    </div>
+  </div>
+
+  <!-- 💡 新增：自定义更换应用弹窗 ── -->
+  <div class="transition-overlay" id="app-picker-modal" style="background: rgba(5, 7, 17, 0.98);">
+    <div style="text-align: center; margin-bottom: 20px;">
+      <h2 style="font-size: 22px; margin-bottom: 8px;">更换常用应用固定</h2>
+      <p style="font-size: 13px; color: var(--text-sub);">选择要固定到此位置的应用 (方向键选择，Enter 确认，Esc 取消)</p>
+    </div>
+    <div class="apps-container" id="picker-grid" style="max-width: 600px; grid-template-columns: repeat(4, 100px); justify-content: center; gap: 20px;">
+      <!-- 弹窗列表由 JS 动态生成 -->
+    </div>
+  </div>
+
+  <!-- 💡 新增：全屏“全部应用”抽屉浮层 ── -->
+  <div class="transition-overlay" id="all-apps-drawer" style="background-image: url('premium_bg.png'); background-size: cover; background-position: center; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); justify-content: flex-start; padding: 60px 40px; overflow-y: auto;">
+    <div style="text-align: center; margin-bottom: 40px; width: 100%;">
+      <h2 style="font-size: 32px; font-weight: 700; margin-bottom: 10px; background: linear-gradient(to right, #fff, #cbd5e1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">所有已安装应用</h2>
+      <p style="font-size: 14px; color: var(--text-sub);">使用方向键选择应用，按 Enter 键启动 | 按 Esc 键返回桌面</p>
+    </div>
+    <div class="apps-container" id="all-apps-grid" style="width: 100%; max-width: 1000px; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 24px; margin: 0 auto;">
+      <!-- 应用列表由 JS 动态生成 -->
+    </div>
+  </div>
+
+  <!-- 底部倒计时 -->
+  <div class="footer-countdown" id="countdown-box">
+    <div class="countdown-text" id="countdown-text">
+      将在 <span id="secs">5</span> 秒后自动直达开机默认源：<span id="target-name">HDMI 2</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progress"></div>
+    </div>
+  </div>
+
+  <!-- 键盘提示（仅桌面预览可见） -->
+  <div class="keyboard-hint">⌨️ 方向键 ◀ ▶ ▲ ▼ 切换 | Enter 确认 | Space 设为默认源 / 自定义更换应用</div>
+
+  <!-- Toast 提示 -->
+  <div class="toast" id="toast-msg"></div>
+
+  <!-- 跳转遮罩 -->
+  <div class="transition-overlay" id="overlay">
+    <div class="spinner"></div>
+    <div class="transition-text" id="overlay-text">正在启动信号源...</div>
+  </div>
+
+  <script>
+    // 1. 系统所有已安装应用池
+    const ALL_INSTALLED_APPS = [
+      { id: "app_iqiyi", name: "银河奇异果", color: "#00cc4c", path: "M17,10.5V7A1,1 0 0,0 16,6H4A1,1 0 0,0 3,7V17A1,1 0 0,0 4,18H16A1,1 0 0,0 17,17V13.5L21,17.5V6.5L17,10.5Z" },
+      { id: "app_tencent", name: "云视听极光", color: "#ff5c38", path: "M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M10,16.5V7.5L16,12L10,16.5Z" },
+      { id: "app_bilibili", name: "云视听小电视", color: "#fb7299", path: "M7,2L9,5H15L17,2H19L16.2,6.2C19,7 21,9.3 21,12V18A3,3 0 0,1 18,21H6A3,3 0 0,1 3,18V12C3,9.3 5,7 7.8,6.2L5,2H7M8,10A1.5,1.5 0 0,0 6.5,11.5A1.5,1.5 0 0,0 8,13A1.5,1.5 0 0,0 9.5,11.5A1.5,1.5 0 0,0 8,10M16,10A1.5,1.5 0 0,0 14.5,11.5A1.5,1.5 0 0,0 16,13A1.5,1.5 0 0,0 17.5,11.5A1.5,1.5 0 0,0 16,10M12,14A2,2 0 0,0 10,16H14A2,2 0 0,0 12,14Z" },
+      { id: "app_manager", name: "电视管家", color: "#1e88e5", path: "M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1Z" },
+      { id: "app_dangbei", name: "当贝市场", color: "#007aff", path: "M19,4H5A2,2 0 0,0 3,6V18A2,2 0 0,0 5,20H19A2,2 0 0,0 21,18V6A2,2 0 0,0 19,4M19,18H5V8H19V18Z" },
+      { id: "app_youku", name: "酷喵影视", color: "#00aeef", path: "M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M10,17V7L18,12L10,17Z" },
+      { id: "app_qqmusic", name: "QQ音乐", color: "#31c27c", path: "M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" },
+      { id: "app_settings", name: "设置助手", color: "#607d8b", path: "M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.47,5.34 14.86,5.08L14.47,2.42C14.43,2.18 14.22,2 13.97,2H9.97C9.72,2 9.53,2.18 9.49,2.42L9.1,5.08C8.49,5.34 7.92,5.66 7.4,6.05L4.91,5.05C4.69,4.96 4.42,5.05 4.3,5.27L2.3,8.73C2.18,8.95 2.23,9.22 2.42,9.37L4.53,11C4.49,11.34 4.46,11.67 4.46,12C4.46,12.33 4.49,12.65 4.53,12.97L2.42,14.63C2.23,14.78 2.18,15.05 2.3,15.27L4.3,18.73C4.42,18.95 4.69,19.04 4.91,18.95L7.4,17.95C7.92,18.34 8.49,18.66 9.1,18.92L9.49,21.58C9.53,21.82 9.72,22 9.97,22H13.97C14.22,22 14.43,21.82 14.47,21.58L14.86,18.92C15.47,18.66 16.04,18.34 16.56,17.95L19.05,18.95C19.27,19.04 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" }
+    ];
+
+    // 2. 常用固定应用的默认配置
+    const DEFAULT_PINNED_IDS = ["app_iqiyi", "app_tencent", "app_bilibili", "app_manager", "app_dangbei"];
+    let pinnedApps = [];
+
+    // 从 LocalStorage 加载用户自定义的常用应用固定数据
+    function loadPinnedApps() {
+      const saved = localStorage.getItem("pinned_apps_v2");
+      if (saved) {
+        pinnedApps = JSON.parse(saved);
+      } else {
+        pinnedApps = [...DEFAULT_PINNED_IDS];
+      }
+      renderPinnedApps();
+    }
+
+    // 渲染首页 5 个自定义槽位
+    function renderPinnedApps() {
+      pinnedApps.forEach((appId, index) => {
+        const slotEl = document.getElementById(`app-slot-${index}`);
+        const appInfo = ALL_INSTALLED_APPS.find(a => a.id === appId) || ALL_INSTALLED_APPS[0];
+        
+        slotEl.setAttribute("data-name", appInfo.name);
+        slotEl.setAttribute("data-appid", appInfo.id);
+        slotEl.innerHTML = `
+          <div class="app-icon" style="background-color: ${appInfo.color};">
+            <svg viewBox="0 0 24 24"><path d="${appInfo.path}"/></svg>
+          </div>
+          <div class="app-name">${appInfo.name}</div>
+        `;
+      });
+    }
+
+    const sourceRow = document.getElementById('source-row');
+    const appsRowEl = document.getElementById('apps-row');
+    const sourceItems = Array.from(sourceRow.children);
+    let appItems = Array.from(appsRowEl.children);
+    let gridRows = [sourceItems, appItems];
+
+    let currentRow = 0, currentCol = 0;
+    let defaultIndex = 1; // HDMI 2
+
+    const secsSpan    = document.getElementById('secs');
+    const targetSpan  = document.getElementById('target-name');
+    const progressFill = document.getElementById('progress');
+    const countdownText = document.getElementById('countdown-text');
+    const overlay      = document.getElementById('overlay');
+    const overlayText  = document.getElementById('overlay-text');
+    const toast        = document.getElementById('toast-msg');
+
+    // 弹窗相关
+    const pickerModal = document.getElementById('app-picker-modal');
+    const pickerGrid = document.getElementById('picker-grid');
+    let isPickerOpen = false;
+    let pickerFocusIndex = 0;
+    let activeSlotIndexToReplace = null; // 当前正在替换的常用位索引 (0-4)
+
+    // 全屏全部应用抽屉相关
+    const allAppsDrawer = document.getElementById('all-apps-drawer');
+    const allAppsGrid = document.getElementById('all-apps-grid');
+    let isDrawerOpen = false;
+    let drawerFocusIndex = 0;
+
+    let isCountdownCancelled = false;
+    let countdownInterval = null;
+    let secondsLeft = 5;
+
+    function startCountdown() {
+      const name = sourceItems[defaultIndex].getAttribute('data-name');
+      targetSpan.textContent = name;
+
+      const total = 5000, step = 50;
+      let elapsed = 0;
+
+      countdownInterval = setInterval(() => {
+        elapsed += step;
+        const pct = 1 - elapsed / total;
+        progressFill.style.transform = `scaleX(${Math.max(0, pct)})`;
+
+        if (elapsed % 1000 === 0) {
+          secondsLeft--;
+          secsSpan.textContent = Math.max(0, secondsLeft);
+        }
+        if (elapsed >= total) {
+          clearInterval(countdownInterval);
+          triggerAction(sourceItems[defaultIndex]);
+        }
+      }, step);
+    }
+
+    function cancelCountdown() {
+      if (isCountdownCancelled) return;
+      isCountdownCancelled = true;
+      clearInterval(countdownInterval);
+      document.getElementById('countdown-box').classList.add('hidden');
+    }
+
+    function setDefaultSource(index) {
+      if (index >= 3) { showToast('该项不支持设为默认源'); return; }
+      defaultIndex = index;
+      sourceItems.forEach((c, i) =>
+        i === index ? c.classList.add('is-default') : c.classList.remove('is-default')
+      );
+      showToast(`⭐ 已将 [${sourceItems[index].getAttribute('data-name')}] 设为开机默认`);
+    }
+
+    function triggerAction(item) {
+      cancelCountdown();
+      overlayText.textContent = `正在启动 ${item.getAttribute('data-name')}...`;
+      overlay.classList.add('active');
+      setTimeout(() => overlay.classList.remove('active'), 2000);
+    }
+
+    function updateFocus(row, col) {
+      gridRows.forEach(r => r.forEach(i => i.classList.remove('focused')));
+      const el = gridRows[row][col];
+      el.classList.add('focused');
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      currentRow = row; currentCol = col;
+    }
+
+    // ── 弹出选择框更换常用应用逻辑 ──
+    function openAppPicker(slotIndex) {
+      cancelCountdown();
+      isPickerOpen = true;
+      activeSlotIndexToReplace = slotIndex;
+      pickerFocusIndex = 0;
+      
+      // 渲染弹窗内所有备选应用
+      pickerGrid.innerHTML = '';
+      ALL_INSTALLED_APPS.forEach((app, idx) => {
+        const itemEl = document.createElement('div');
+        itemEl.className = 'app-item';
+        itemEl.innerHTML = `
+          <div class="app-icon" style="background-color: ${app.color};">
+            <svg viewBox="0 0 24 24"><path d="${app.path}"/></svg>
+          </div>
+          <div class="app-name">${app.name}</div>
+        `;
+        itemEl.addEventListener('click', () => {
+          selectAppForSlot(app.id);
+        });
+        pickerGrid.appendChild(itemEl);
+      });
+
+      updatePickerFocus();
+      pickerModal.classList.add('active');
+    }
+
+    function updatePickerFocus() {
+      const items = Array.from(pickerGrid.children);
+      items.forEach((item, idx) => {
+        if (idx === pickerFocusIndex) {
+          item.classList.add('focused');
+        } else {
+          item.classList.remove('focused');
+        }
+      });
+    }
+
+    function selectAppForSlot(appId) {
+      pinnedApps[activeSlotIndexToReplace] = appId;
+      localStorage.setItem("pinned_apps_v2", JSON.stringify(pinnedApps));
+      renderPinnedApps();
+      closeAppPicker();
+      showToast("⭐ 常用位应用已更新");
+    }
+
+    function closeAppPicker() {
+      isPickerOpen = false;
+      pickerModal.classList.remove('active');
+      appItems = Array.from(appsRowEl.children);
+      gridRows = [sourceItems, appItems];
+      updateFocus(1, activeSlotIndexToReplace);
+    }
+
+    // ── 全屏全部应用抽屉逻辑 ──
+    function openAllAppsDrawer() {
+      cancelCountdown();
+      isDrawerOpen = true;
+      drawerFocusIndex = 0;
+
+      allAppsGrid.innerHTML = '';
+      ALL_INSTALLED_APPS.forEach((app, idx) => {
+        const itemEl = document.createElement('div');
+        itemEl.className = 'app-item';
+        itemEl.innerHTML = `
+          <div class="app-icon" style="background-color: ${app.color};">
+            <svg viewBox="0 0 24 24"><path d="${app.path}"/></svg>
+          </div>
+          <div class="app-name">${app.name}</div>
+        `;
+        itemEl.addEventListener('click', () => {
+          triggerAction(itemEl);
+          closeAllAppsDrawer();
+        });
+        allAppsGrid.appendChild(itemEl);
+      });
+
+      updateDrawerFocus();
+      allAppsDrawer.classList.add('active');
+    }
+
+    function updateDrawerFocus() {
+      const items = Array.from(allAppsGrid.children);
+      items.forEach((item, idx) => {
+        if (idx === drawerFocusIndex) {
+          item.classList.add('focused');
+          item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+          item.classList.remove('focused');
+        }
+      });
+    }
+
+    function closeAllAppsDrawer() {
+      isDrawerOpen = false;
+      allAppsDrawer.classList.remove('active');
+      // 重新聚焦到“全部应用”按钮上
+      updateFocus(1, 5);
+    }
+
+    let toastTimer = null;
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    document.addEventListener('keydown', e => {
+      cancelCountdown();
+      
+      // 全屏应用抽屉打开时的按键处理
+      if (isDrawerOpen) {
+        const items = Array.from(allAppsGrid.children);
+        const len = items.length;
+        const cols = 6;
+        
+        if (e.key === 'ArrowRight') {
+          drawerFocusIndex = (drawerFocusIndex + 1) % len;
+          updateDrawerFocus();
+        } else if (e.key === 'ArrowLeft') {
+          drawerFocusIndex = (drawerFocusIndex - 1 + len) % len;
+          updateDrawerFocus();
+        } else if (e.key === 'ArrowDown') {
+          if (drawerFocusIndex + cols < len) drawerFocusIndex += cols;
+          else drawerFocusIndex = len - 1;
+          updateDrawerFocus();
+        } else if (e.key === 'ArrowUp') {
+          if (drawerFocusIndex - cols >= 0) drawerFocusIndex -= cols;
+          updateDrawerFocus();
+        } else if (e.key === 'Enter') {
+          triggerAction(items[drawerFocusIndex]);
+          closeAllAppsDrawer();
+        } else if (e.key === 'Escape' || e.key === 'Back') {
+          closeAllAppsDrawer();
+        }
+        return;
+      }
+
+      // 弹窗打开时的按键处理
+      if (isPickerOpen) {
+        const items = Array.from(pickerGrid.children);
+        const len = items.length;
+        if (e.key === 'ArrowRight') {
+          pickerFocusIndex = (pickerFocusIndex + 1) % len;
+          updatePickerFocus();
+        } else if (e.key === 'ArrowLeft') {
+          pickerFocusIndex = (pickerFocusIndex - 1 + len) % len;
+          updatePickerFocus();
+        } else if (e.key === 'ArrowDown') {
+          if (pickerFocusIndex + 4 < len) {
+            pickerFocusIndex += 4;
+            updatePickerFocus();
+          }
+        } else if (e.key === 'ArrowUp') {
+          if (pickerFocusIndex - 4 >= 0) {
+            pickerFocusIndex -= 4;
+            updatePickerFocus();
+          }
+        } else if (e.key === 'Enter') {
+          selectAppForSlot(ALL_INSTALLED_APPS[pickerFocusIndex].id);
+        } else if (e.key === 'Escape' || e.key === 'Back') {
+          closeAppPicker();
+        }
+        return;
+      }
+
+      // 正常主界面按键处理
+      const len = gridRows[currentRow].length;
+      if (e.key === 'ArrowRight') updateFocus(currentRow, (currentCol + 1) % len);
+      else if (e.key === 'ArrowLeft') updateFocus(currentRow, (currentCol - 1 + len) % len);
+      else if (e.key === 'ArrowDown' && currentRow === 0) updateFocus(1, Math.min(currentCol, appItems.length - 1));
+      else if (e.key === 'ArrowUp'   && currentRow === 1) updateFocus(0, Math.min(currentCol, sourceItems.length - 1));
+      else if (e.key === 'Enter') {
+        const selected = gridRows[currentRow][currentCol];
+        if (currentRow === 1 && selected.id === "all-apps-btn") {
+          openAllAppsDrawer();
+        } else {
+          triggerAction(selected);
+        }
+      }
+      else if (e.key === ' ' || e.code === 'Space') {
+        if (currentRow === 0) {
+          setDefaultSource(currentCol);
+        } else if (currentRow === 1 && currentCol < 5) {
+          // 在 1-5 个应用插槽按空格，触发自定义选择面板
+          openAppPicker(currentCol);
+        }
+      }
+    });
+
+    // 鼠标/触屏事件绑定
+    sourceItems.forEach((card, i) => {
+      card.addEventListener('mouseenter', () => { if(!isPickerOpen){ cancelCountdown(); updateFocus(0, i); } });
+      card.addEventListener('click', () => { if(!isPickerOpen) triggerAction(card); });
+      card.addEventListener('dblclick', e => { e.preventDefault(); if(!isPickerOpen) setDefaultSource(i); });
+    });
+
+    for (let i = 0; i < 5; i++) {
+      const slotEl = document.getElementById(`app-slot-${i}`);
+      slotEl.addEventListener('mouseenter', () => { if(!isPickerOpen){ cancelCountdown(); updateFocus(1, i); } });
+      slotEl.addEventListener('click', () => { if(!isPickerOpen) triggerAction(slotEl); });
+      // 双击模拟遥控器长按替换
+      slotEl.addEventListener('dblclick', e => { e.preventDefault(); if(!isPickerOpen) openAppPicker(i); });
+    }
+
+    const allAppsBtn = document.getElementById('all-apps-btn');
+    allAppsBtn.addEventListener('mouseenter', () => { if(!isPickerOpen && !isDrawerOpen){ cancelCountdown(); updateFocus(1, 5); } });
+    allAppsBtn.addEventListener('click', () => { if(!isPickerOpen && !isDrawerOpen) openAllAppsDrawer(); });
+
+    window.onload = () => {
+      loadPinnedApps();
+      updateFocus(0, 1); // 默认聚焦 HDMI 2
+      startCountdown();
+    };
+  </script>
+</body>
+</html>
+</body>
+</html>

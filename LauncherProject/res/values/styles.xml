@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Launcher" parent="android:Theme.Material.NoActionBar.Fullscreen">
+        <item name="android:windowBackground">@color/bg_color</item>
+        <item name="android:textColor">@color/text_main</item>
+    </style>
+</resources>

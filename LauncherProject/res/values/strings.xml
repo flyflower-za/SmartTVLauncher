@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">微镜极简桌面</string>
+    <string name="hdmi1">HDMI 1</string>
+    <string name="hdmi2">HDMI 2</string>
+    <string name="av">AV 信号</string>
+    <string name="settings">系统设置</string>
+    <string name="countdown_template">将在 %d 秒后自动连接到开机默认源</string>
+    <string name="countdown_cancelled">⏱️ 倒计时已暂停。请使用遥控器方向键选择，长按确定键设为开机默认。</string>
+</resources>

@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="30dp"
+    android:background="@drawable/premium_bg">
+
+    <!-- 顶部标题：仅保留主标题 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="极简桌面"
+        android:textColor="@color/text_main"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="20dp" />
+
+    <!-- 直达与信号源行标签 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="直达与信号源"
+        android:textColor="@color/text_sub"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="10dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="25dp">
+
+        <!-- HDMI 1 Card -->
+        <LinearLayout
+            android:id="@+id/card_hdmi1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/card_selector"
+            android:focusable="true"
+            android:clickable="true"
+            android:orientation="vertical"
+            android:padding="18dp">
+            <!-- 用来强制 4:3 比例的占位辅助，但在电视布局里通过固定比重即可 -->
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="130dp">
+                <TextView
+                    android:id="@+id/star_hdmi1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⭐ 默认"
+                    android:textColor="@color/star_color"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    android:layout_alignParentRight="true" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/hdmi1"
+                    android:textColor="@color/text_main"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:layout_alignParentBottom="true" />
+            </RelativeLayout>
+        </LinearLayout>
+
+        <!-- HDMI 2 Card -->
+        <LinearLayout
+            android:id="@+id/card_hdmi2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/card_selector"
+            android:focusable="true"
+            android:clickable="true"
+            android:orientation="vertical"
+            android:padding="18dp">
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="130dp">
+                <TextView
+                    android:id="@+id/star_hdmi2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⭐ 默认"
+                    android:textColor="@color/star_color"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:visibility="visible"
+                    android:layout_alignParentRight="true" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/hdmi2"
+                    android:textColor="@color/text_main"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:layout_alignParentBottom="true" />
+            </RelativeLayout>
+        </LinearLayout>
+
+        <!-- AV Card -->
+        <LinearLayout
+            android:id="@+id/card_av"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/card_selector"
+            android:focusable="true"
+            android:clickable="true"
+            android:orientation="vertical"
+            android:padding="18dp">
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="130dp">
+                <TextView
+                    android:id="@+id/star_av"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⭐ 默认"
+                    android:textColor="@color/star_color"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    android:layout_alignParentRight="true" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/av"
+                    android:textColor="@color/text_main"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:layout_alignParentBottom="true" />
+            </RelativeLayout>
+        </LinearLayout>
+
+        <!-- Settings Card -->
+        <LinearLayout
+            android:id="@+id/card_settings"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/card_selector"
+            android:focusable="true"
+            android:clickable="true"
+            android:orientation="vertical"
+            android:padding="18dp">
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="130dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings"
+                    android:textColor="@color/text_main"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:layout_alignParentBottom="true" />
+            </RelativeLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 应用抽屉行：保留 6 个固定常用位，长按可自定义 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="已安装应用 (长按遥控确认键可自定义更换固定)"
+        android:textColor="@color/text_sub"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="10dp" />
+
+    <LinearLayout
+        android:id="@+id/apps_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="20dp" />
+
+    <!-- 底部倒计时容器 -->
+    <LinearLayout
+        android:id="@+id/countdown_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center_horizontal|bottom">
+
+        <TextView
+            android:id="@+id/tv_countdown"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="将在 5 秒后自动直达开机默认源"
+            android:textColor="@color/text_sub"
+            android:textSize="13sp"
+            android:layout_marginBottom="8dp" />
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="280dp"
+            android:layout_height="4dp"
+            android:max="100"
+            android:progress="100" />
+    </LinearLayout>
+
+</LinearLayout>

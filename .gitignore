@@ -1,0 +1,13 @@
+# 屏蔽本地的构建依赖工具链与反编译资源
+.build_tools/
+.gemini/
+
+# 忽略临时编译产物
+*.apk
+*.zip
+*.dex
+*.class
+
+# 系统垃圾
+.DS_Store
+Thumg.db

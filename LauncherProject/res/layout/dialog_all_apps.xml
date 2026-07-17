@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="40dp"
+    android:background="@drawable/premium_bg">
+
+    <!-- 顶部标题 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="所有已安装应用"
+        android:textColor="@color/text_main"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="30dp" />
+
+    <!-- 多行网格列表 -->
+    <GridView
+        android:id="@+id/apps_grid"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:numColumns="6"
+        android:stretchMode="columnWidth"
+        android:horizontalSpacing="15dp"
+        android:verticalSpacing="15dp"
+        android:gravity="center"
+        android:listSelector="@android:color/transparent"
+        android:descendantFocusability="afterDescendants"
+        android:scrollbarStyle="outsideOverlay" />
+
+</LinearLayout>
