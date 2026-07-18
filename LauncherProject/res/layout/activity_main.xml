@@ -15,7 +15,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="微鲸极简桌面"
+            android:text="极简桌面"
             android:textColor="@color/text_main"
             android:textSize="26sp"
             android:textStyle="bold"
@@ -91,7 +91,7 @@
         android:id="@+id/tv_source_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="直达与信号源 (长按系统设置可一键恢复原厂桌面组件)"
+        android:text="直达与信号源 (长按系统设置恢复原厂桌面)"
         android:textColor="@color/text_sub"
         android:textSize="14sp"
         android:textStyle="bold"
