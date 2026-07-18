@@ -27,9 +27,12 @@ public final class R {
     public static final int card_focused=0x7f020004;
     public static final int card_normal=0x7f020005;
     public static final int card_selector=0x7f020006;
-    public static final int premium_bg=0x7f020007;
-    public static final int wifi_offline=0x7f020008;
-    public static final int wifi_online=0x7f020009;
+    public static final int ic_all_apps=0x7f020007;
+    public static final int ic_launcher_settings=0x7f020008;
+    public static final int premium_bg=0x7f020009;
+    public static final int status_bar_bg=0x7f02000a;
+    public static final int wifi_offline=0x7f02000b;
+    public static final int wifi_online=0x7f02000c;
   }
   public static final class id {
     public static final int apps_container=0x7f030000;
@@ -40,11 +43,20 @@ public final class R {
     public static final int card_settings=0x7f030005;
     public static final int countdown_container=0x7f030006;
     public static final int iv_wifi_status=0x7f030007;
-    public static final int progress_bar=0x7f030008;
-    public static final int star_av=0x7f030009;
-    public static final int star_hdmi1=0x7f03000a;
-    public static final int star_hdmi2=0x7f03000b;
-    public static final int tv_countdown=0x7f03000c;
+    public static final int layout_source_row=0x7f030008;
+    public static final int progress_bar=0x7f030009;
+    public static final int star_av=0x7f03000a;
+    public static final int star_hdmi1=0x7f03000b;
+    public static final int star_hdmi2=0x7f03000c;
+    public static final int status_bar_container=0x7f03000d;
+    public static final int tv_apps_label=0x7f03000e;
+    public static final int tv_clock_date=0x7f03000f;
+    public static final int tv_clock_time=0x7f030010;
+    public static final int tv_countdown=0x7f030011;
+    public static final int tv_source_label=0x7f030012;
+    public static final int tv_status_av=0x7f030013;
+    public static final int tv_status_hdmi1=0x7f030014;
+    public static final int tv_status_hdmi2=0x7f030015;
   }
   public static final class layout {
     public static final int activity_main=0x7f040000;
