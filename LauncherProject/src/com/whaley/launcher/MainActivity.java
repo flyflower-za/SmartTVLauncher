@@ -68,6 +68,7 @@ public class MainActivity extends Activity {
 
     private int defaultSourceIndex = 1; 
     private Runnable clockRunnable;
+    private Runnable signalPollRunnable;
     private int secondsLeft = 5;
     private boolean isCountdownCancelled = false;
     private Handler handler = new Handler();
@@ -324,6 +325,9 @@ public class MainActivity extends Activity {
         }
         if (clockRunnable != null) {
             handler.removeCallbacks(clockRunnable);
+        }
+        if (signalPollRunnable != null) {
+            handler.removeCallbacks(signalPollRunnable);
         }
     }
 
@@ -725,54 +729,89 @@ public class MainActivity extends Activity {
         try {
             final TvInputManager tvInputManager = (TvInputManager) getSystemService(Context.TV_INPUT_SERVICE);
             if (tvInputManager != null) {
-                updateTvInputStates(tvInputManager);
                 tvInputManager.registerCallback(new TvInputManager.TvInputCallback() {
                     @Override
                     public void onInputStateChanged(String inputId, int state) {
-                        updateTvInputStates(tvInputManager);
+                        updateSignalStates();
                     }
                 }, new Handler());
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        startSignalPolling();
     }
 
-    private void updateTvInputStates(TvInputManager tvInputManager) {
-        if (tvInputManager == null) return;
+    private void startSignalPolling() {
+        signalPollRunnable = new Runnable() {
+            @Override
+            public void run() {
+                updateSignalStates();
+                handler.postDelayed(this, 2000);
+            }
+        };
+        handler.post(signalPollRunnable);
+    }
+
+    private void updateSignalStates() {
+        boolean hdmi1Connected = false;
+        boolean hdmi2Connected = false;
+        boolean avConnected = false;
+        boolean mstarSuccess = false;
+
+        // Try Mstar TvManager reflection first
         try {
-            List<TvInputInfo> inputs = tvInputManager.getTvInputList();
-            
-            boolean hdmi1Connected = false;
-            boolean hdmi2Connected = false;
-            boolean avConnected = false;
-            
-            for (TvInputInfo info : inputs) {
-                String id = info.getId().toLowerCase();
-                int state = tvInputManager.getInputState(info.getId());
-                boolean isConnected = (state == TvInputManager.INPUT_STATE_CONNECTED || state == TvInputManager.INPUT_STATE_CONNECTED_STANDBY);
-                
-                if (id.contains("hdmi1") || id.contains("hdmi/hw1") || id.contains("hw4")) {
-                    if (isConnected) hdmi1Connected = true;
-                } else if (id.contains("hdmi2") || id.contains("hdmi/hw2") || id.contains("hw5")) {
-                    if (isConnected) hdmi2Connected = true;
-                } else if (id.contains("av") || id.contains("composite") || id.contains("hw7")) {
-                    if (isConnected) avConnected = true;
-                } else if (info.getType() == TvInputInfo.TYPE_HDMI) {
-                    if (id.contains("port1")) {
-                        if (isConnected) hdmi1Connected = true;
-                    } else if (id.contains("port2")) {
-                        if (isConnected) hdmi2Connected = true;
-                    }
+            Class<?> tvManagerClass = Class.forName("com.mstar.android.tvapi.common.TvManager");
+            Method getInstanceMethod = tvManagerClass.getMethod("getInstance");
+            Object tvManager = getInstanceMethod.invoke(null);
+            if (tvManager != null) {
+                Method setTvosCommonCommandMethod = tvManagerClass.getMethod("setTvosCommonCommand", String.class);
+                short[] sourceStatus = (short[]) setTvosCommonCommandMethod.invoke(tvManager, "GetInputSourceStatus");
+                if (sourceStatus != null) {
+                    if (sourceStatus.length > 23) hdmi1Connected = (sourceStatus[23] != 0);
+                    if (sourceStatus.length > 24) hdmi2Connected = (sourceStatus[24] != 0);
+                    if (sourceStatus.length > 2) avConnected = (sourceStatus[2] != 0);
+                    mstarSuccess = true;
                 }
             }
-            
-            updateSignalIndicator(tvStatusHdmi1, hdmi1Connected);
-            updateSignalIndicator(tvStatusHdmi2, hdmi2Connected);
-            updateSignalIndicator(tvStatusAv, avConnected);
         } catch (Exception e) {
-            e.printStackTrace();
+            // Mstar reflection failed
         }
+
+        // If Mstar failed, fallback to standard TvInputManager
+        if (!mstarSuccess) {
+            try {
+                TvInputManager tvInputManager = (TvInputManager) getSystemService(Context.TV_INPUT_SERVICE);
+                if (tvInputManager != null) {
+                    List<TvInputInfo> inputs = tvInputManager.getTvInputList();
+                    for (TvInputInfo info : inputs) {
+                        String id = info.getId().toLowerCase();
+                        int state = tvInputManager.getInputState(info.getId());
+                        boolean isConnected = (state == TvInputManager.INPUT_STATE_CONNECTED || state == TvInputManager.INPUT_STATE_CONNECTED_STANDBY);
+                        
+                        if (id.contains("hdmi1") || id.contains("hdmi/hw1") || id.contains("hw4")) {
+                            if (isConnected) hdmi1Connected = true;
+                        } else if (id.contains("hdmi2") || id.contains("hdmi/hw2") || id.contains("hw5")) {
+                            if (isConnected) hdmi2Connected = true;
+                        } else if (id.contains("av") || id.contains("composite") || id.contains("hw7")) {
+                            if (isConnected) avConnected = true;
+                        } else if (info.getType() == TvInputInfo.TYPE_HDMI) {
+                            if (id.contains("port1")) {
+                                if (isConnected) hdmi1Connected = true;
+                            } else if (id.contains("port2")) {
+                                if (isConnected) hdmi2Connected = true;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        updateSignalIndicator(tvStatusHdmi1, hdmi1Connected);
+        updateSignalIndicator(tvStatusHdmi2, hdmi2Connected);
+        updateSignalIndicator(tvStatusAv, avConnected);
     }
 
     private void updateSignalIndicator(TextView tv, boolean connected) {
