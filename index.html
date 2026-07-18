@@ -229,6 +229,62 @@
       transition: transform 0.1s linear;
     }
 
+    /* ── 顶部状态区域 ── */
+    .status-bar-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 6px 14px;
+      border-radius: 16px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      animation: fadeInDown 0.6s ease both;
+    }
+
+    /* ── 信号源状态角标 ── */
+    .signal-status {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 8px;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      font-size: 10px;
+      color: #10b981;
+      font-weight: 500;
+      opacity: 0.9;
+      transition: all 0.25s;
+    }
+    .signal-status.inactive {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-sub);
+    }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: #10b981;
+      display: inline-block;
+    }
+    .signal-status.active .status-dot {
+      animation: pulse-green 2s infinite;
+    }
+    .signal-status.inactive .status-dot {
+      background-color: #6b7280;
+    }
+    @keyframes pulse-green {
+      0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
     /* ── 操作提示条（仅桌面预览） ── */
     .keyboard-hint {
       position: fixed;
@@ -293,15 +349,27 @@
 </head>
 <body>
 
-  <!-- 顶部标题：增加 WiFi 状态展示 -->
+  <!-- 顶部标题：增加 WiFi 状态与时间日期展示 -->
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; width: 100%;">
     <h1 class="page-title" style="margin-bottom: 0;">极简桌面</h1>
     
-    <!-- 模拟 WiFi 状态图标 -->
-    <div id="wifi-indicator" class="app-item item-nav" style="padding: 6px; border-radius: 12px; display: flex; align-items: center; justify-content: center;" data-name="系统设置 (WiFi已连接)">
-      <svg viewBox="0 0 24 24" style="width: 28px; height: 28px; fill: #10b981; filter: drop-shadow(0 0 8px rgba(16,185,129,0.4));">
-        <path d="M12,21L15.6,16.2C14.6,15.4 13.3,15 12,15C10.7,15 9.4,15.4 8.4,16.2L12,21M12,3C7.3,3 3,5 0,8.5L3.6,13.3C6,10.6 9.8,9 12,9C14.2,9 18,10.6 20.4,13.3L24,8.5C21,5 16.7,3 12,3M12,9C9.2,9 6.6,10.2 4.8,12.1L8.4,16.9C9.4,15.9 10.6,15.5 12,15.5C13.4,15.5 14.6,15.9 15.6,16.9L19.2,12.1C17.4,10.2 14.8,9 12,9Z"/>
-      </svg>
+    <!-- 顶部状态栏 -->
+    <div class="status-bar-container">
+      <!-- 时间/日期显示 -->
+      <div id="clock-widget" style="display: flex; flex-direction: column; align-items: flex-end; border-right: 1px solid rgba(255, 255, 255, 0.1); padding-right: 14px; margin-right: 2px;">
+        <div id="clock-time" style="font-size: 28px; font-weight: 600; color: var(--text-main); line-height: 1.0; letter-spacing: 0.5px;">00:00</div>
+        <div id="clock-date" style="font-size: 11px; color: var(--text-sub); margin-top: 4px; font-weight: 400; letter-spacing: 0.5px;">2026年7月18日 星期六</div>
+      </div>
+      
+      <!-- 模拟 WiFi 状态图标 -->
+      <div id="wifi-indicator" style="padding: 6px; display: flex; align-items: center; justify-content: center;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; filter: drop-shadow(0 0 6px rgba(16,185,129,0.35));">
+          <path d="M12 20h.01" stroke-width="3" />
+          <path d="M8.26 16.24a6 6 0 0 1 7.48 0" />
+          <path d="M5 12.55a11 11 0 0 1 14 0" />
+          <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+        </svg>
+      </div>
     </div>
   </div>
 
@@ -312,18 +380,30 @@
     <!-- HDMI 1 -->
     <div class="card item-nav" data-name="HDMI 1">
       <div class="default-badge">⭐ 默认</div>
+      <div class="signal-status active">
+        <span class="status-dot"></span>
+        <span>已连接</span>
+      </div>
       <span class="card-title">HDMI 1</span>
     </div>
 
     <!-- HDMI 2 (默认) -->
     <div class="card item-nav is-default" data-name="HDMI 2">
       <div class="default-badge">⭐ 默认</div>
+      <div class="signal-status active">
+        <span class="status-dot"></span>
+        <span>已连接</span>
+      </div>
       <span class="card-title">HDMI 2</span>
     </div>
 
     <!-- AV -->
     <div class="card item-nav" data-name="AV">
       <div class="default-badge">⭐ 默认</div>
+      <div class="signal-status inactive">
+        <span class="status-dot"></span>
+        <span>无信号</span>
+      </div>
       <span class="card-title">AV</span>
     </div>
 
@@ -742,10 +822,65 @@
     allAppsBtn.addEventListener('mouseenter', () => { if(!isPickerOpen && !isDrawerOpen){ cancelCountdown(); updateFocus(1, 5); } });
     allAppsBtn.addEventListener('click', () => { if(!isPickerOpen && !isDrawerOpen) openAllAppsDrawer(); });
 
+    function updateClock() {
+      const timeEl = document.getElementById('clock-time');
+      const dateEl = document.getElementById('clock-date');
+      if (!timeEl || !dateEl) return;
+      
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      timeEl.textContent = `${hours}:${minutes}`;
+      
+      const years = now.getFullYear();
+      const months = now.getMonth() + 1;
+      const dates = now.getDate();
+      const days = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+      const dayName = days[now.getDay()];
+      dateEl.textContent = `${years}年${months}月${dates}日 ${dayName}`;
+    }
+
+    function updateWifiStatus() {
+      const wifiIndicator = document.getElementById('wifi-indicator');
+      if (!wifiIndicator) return;
+      
+      const isOnline = navigator.onLine;
+      if (isOnline) {
+        wifiIndicator.setAttribute("data-name", "系统设置 (WiFi已连接)");
+        wifiIndicator.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; filter: drop-shadow(0 0 6px rgba(16,185,129,0.35));">
+            <path d="M12 20h.01" stroke-width="3" />
+            <path d="M8.26 16.24a6 6 0 0 1 7.48 0" />
+            <path d="M5 12.55a11 11 0 0 1 14 0" />
+            <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+          </svg>
+        `;
+      } else {
+        wifiIndicator.setAttribute("data-name", "系统设置 (网络未连接)");
+        wifiIndicator.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; filter: drop-shadow(0 0 6px rgba(239,68,68,0.35));">
+            <line x1="1" y1="1" x2="23" y2="23" stroke="#ef4444" />
+            <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55" />
+            <path d="M5 12.55a10.94 10.94 0 0 1 5.83-2.84" />
+            <path d="M8.26 16.24a6 6 0 0 1 7.48 0" />
+            <path d="M12 20h.01" stroke-width="3" />
+            <path d="M1.42 9a16 16 0 0 1 2.53-1.44" />
+            <path d="M8.53 4.27a15.86 15.86 0 0 1 14.05 4.73" />
+          </svg>
+        `;
+      }
+    }
+
     window.onload = () => {
       loadPinnedApps();
       updateFocus(0, 1); // 默认聚焦 HDMI 2
       startCountdown();
+      updateClock();
+      setInterval(updateClock, 1000);
+      
+      updateWifiStatus();
+      window.addEventListener('online', updateWifiStatus);
+      window.addEventListener('offline', updateWifiStatus);
     };
   </script>
 </body>

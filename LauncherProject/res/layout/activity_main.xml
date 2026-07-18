@@ -15,24 +15,74 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="微镜极简桌面"
+            android:text="微鲸极简桌面"
             android:textColor="@color/text_main"
             android:textSize="26sp"
             android:textStyle="bold"
-            android:layout_alignParentLeft="true" />
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true" />
 
-        <!-- 建议 2：顶部 Wi-Fi 状态指示图，支持聚焦和点击 -->
-        <ImageView
-            android:id="@+id/iv_wifi_status"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+        <!-- 顶部状态栏：包含时间、日期、分割线和 WiFi 指示器 -->
+        <LinearLayout
+            android:id="@+id/status_bar_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
             android:layout_centerVertical="true"
-            android:background="@drawable/app_item_selector"
-            android:focusable="true"
-            android:clickable="true"
-            android:padding="4dp"
-            android:src="@android:drawable/ic_dialog_info" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingLeft="14dp"
+            android:paddingRight="14dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:background="@drawable/status_bar_bg">
+
+            <!-- 时间/日期 -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="right"
+                android:layout_marginRight="12dp">
+                
+                <TextView
+                    android:id="@+id/tv_clock_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="00:00"
+                    android:textColor="@color/text_main"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:includeFontPadding="false" />
+                
+                <TextView
+                    android:id="@+id/tv_clock_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="2026年7月18日 星期六"
+                    android:textColor="@color/text_sub"
+                    android:textSize="10sp"
+                    android:layout_marginTop="2dp"
+                    android:includeFontPadding="false" />
+            </LinearLayout>
+
+            <!-- 分割线 -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="24dp"
+                android:background="#33ffffff"
+                android:layout_marginRight="12dp" />
+
+            <!-- Wi-Fi 状态指示图，仅展示状态 -->
+            <ImageView
+                android:id="@+id/iv_wifi_status"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:focusable="false"
+                android:clickable="false"
+                android:padding="2dp"
+                android:src="@drawable/wifi_online" />
+        </LinearLayout>
 
     </RelativeLayout>
 
@@ -67,6 +117,16 @@
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="130dp">
+                <TextView
+                    android:id="@+id/tv_status_hdmi1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="● 已连接"
+                    android:textColor="#10b981"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentTop="true" />
                 <TextView
                     android:id="@+id/star_hdmi1"
                     android:layout_width="wrap_content"
@@ -104,6 +164,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="130dp">
                 <TextView
+                    android:id="@+id/tv_status_hdmi2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="● 已连接"
+                    android:textColor="#10b981"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentTop="true" />
+                <TextView
                     android:id="@+id/star_hdmi2"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -139,6 +209,16 @@
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="130dp">
+                <TextView
+                    android:id="@+id/tv_status_av"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="● 无信号"
+                    android:textColor="#9ca3af"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentTop="true" />
                 <TextView
                     android:id="@+id/star_av"
                     android:layout_width="wrap_content"

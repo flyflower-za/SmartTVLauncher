@@ -27,6 +27,8 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.media.tv.TvInputInfo;
+import android.media.tv.TvInputManager;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -47,6 +49,13 @@ public class MainActivity extends Activity {
     private TextView starHdmi2;
     private TextView starAv;
     
+    private TextView tvStatusHdmi1;
+    private TextView tvStatusHdmi2;
+    private TextView tvStatusAv;
+
+    private TextView tvClockTime;
+    private TextView tvClockDate;
+
     private TextView tvCountdown;
     private ProgressBar progressBar;
     private LinearLayout countdownContainer; 
@@ -58,6 +67,7 @@ public class MainActivity extends Activity {
     private WifiReceiver wifiReceiver;
 
     private int defaultSourceIndex = 1; 
+    private Runnable clockRunnable;
     private int secondsLeft = 5;
     private boolean isCountdownCancelled = false;
     private Handler handler = new Handler();
@@ -91,6 +101,13 @@ public class MainActivity extends Activity {
         
         ivWifiStatus = (ImageView) findViewById(R.id.iv_wifi_status);
 
+        tvStatusHdmi1 = (TextView) findViewById(R.id.tv_status_hdmi1);
+        tvStatusHdmi2 = (TextView) findViewById(R.id.tv_status_hdmi2);
+        tvStatusAv = (TextView) findViewById(R.id.tv_status_av);
+
+        tvClockTime = (TextView) findViewById(R.id.tv_clock_time);
+        tvClockDate = (TextView) findViewById(R.id.tv_clock_date);
+
         // 读取默认源配置
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         defaultSourceIndex = prefs.getInt(KEY_DEFAULT_SOURCE, 1); 
@@ -109,7 +126,6 @@ public class MainActivity extends Activity {
         cardHdmi2.setOnFocusChangeListener(focusListener);
         cardAv.setOnFocusChangeListener(focusListener);
         cardSettings.setOnFocusChangeListener(focusListener);
-        ivWifiStatus.setOnFocusChangeListener(focusListener);
 
         // 信号源点击
         cardHdmi1.setOnClickListener(new View.OnClickListener() {
@@ -165,19 +181,14 @@ public class MainActivity extends Activity {
             }
         });
 
-        // 建议 2：点击 Wi-Fi 图标直接进入系统网络设置
-        ivWifiStatus.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                launchWifiSettings();
-            }
-        });
 
         // 动态广播注册，实时刷新 Wi-Fi 强度图标
         registerWifiReceiver();
 
         scanAllApps();
         renderAppShelf();
+        initTvInputManager();
+        startClockUpdates();
         startCountdown();
     }
 
@@ -310,6 +321,9 @@ public class MainActivity extends Activity {
         super.onDestroy();
         if (wifiReceiver != null) {
             unregisterReceiver(wifiReceiver);
+        }
+        if (clockRunnable != null) {
+            handler.removeCallbacks(clockRunnable);
         }
     }
 
@@ -705,6 +719,105 @@ public class MainActivity extends Activity {
             return true; 
         }
         return super.onKeyDown(keyCode, event);
+    }
+
+    private void initTvInputManager() {
+        try {
+            final TvInputManager tvInputManager = (TvInputManager) getSystemService(Context.TV_INPUT_SERVICE);
+            if (tvInputManager != null) {
+                updateTvInputStates(tvInputManager);
+                tvInputManager.registerCallback(new TvInputManager.TvInputCallback() {
+                    @Override
+                    public void onInputStateChanged(String inputId, int state) {
+                        updateTvInputStates(tvInputManager);
+                    }
+                }, new Handler());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void updateTvInputStates(TvInputManager tvInputManager) {
+        if (tvInputManager == null) return;
+        try {
+            List<TvInputInfo> inputs = tvInputManager.getTvInputList();
+            
+            boolean hdmi1Connected = false;
+            boolean hdmi2Connected = false;
+            boolean avConnected = false;
+            
+            for (TvInputInfo info : inputs) {
+                String id = info.getId().toLowerCase();
+                int state = tvInputManager.getInputState(info.getId());
+                boolean isConnected = (state == TvInputManager.INPUT_STATE_CONNECTED || state == TvInputManager.INPUT_STATE_CONNECTED_STANDBY);
+                
+                if (id.contains("hdmi1") || id.contains("hdmi/hw1") || id.contains("hw4")) {
+                    if (isConnected) hdmi1Connected = true;
+                } else if (id.contains("hdmi2") || id.contains("hdmi/hw2") || id.contains("hw5")) {
+                    if (isConnected) hdmi2Connected = true;
+                } else if (id.contains("av") || id.contains("composite") || id.contains("hw7")) {
+                    if (isConnected) avConnected = true;
+                } else if (info.getType() == TvInputInfo.TYPE_HDMI) {
+                    if (id.contains("port1")) {
+                        if (isConnected) hdmi1Connected = true;
+                    } else if (id.contains("port2")) {
+                        if (isConnected) hdmi2Connected = true;
+                    }
+                }
+            }
+            
+            updateSignalIndicator(tvStatusHdmi1, hdmi1Connected);
+            updateSignalIndicator(tvStatusHdmi2, hdmi2Connected);
+            updateSignalIndicator(tvStatusAv, avConnected);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void updateSignalIndicator(TextView tv, boolean connected) {
+        if (tv == null) return;
+        if (connected) {
+            tv.setText("● 已连接");
+            tv.setTextColor(Color.parseColor("#10b981"));
+        } else {
+            tv.setText("● 无信号");
+            tv.setTextColor(Color.parseColor("#9ca3af"));
+        }
+    }
+
+    private void startClockUpdates() {
+        clockRunnable = new Runnable() {
+            @Override
+            public void run() {
+                updateClock();
+                handler.postDelayed(this, 1000);
+            }
+        };
+        handler.post(clockRunnable);
+    }
+
+    private void updateClock() {
+        if (tvClockTime == null || tvClockDate == null) return;
+        try {
+            java.util.Calendar cal = java.util.Calendar.getInstance();
+            int hour = cal.get(java.util.Calendar.HOUR_OF_DAY);
+            int minute = cal.get(java.util.Calendar.MINUTE);
+            
+            String timeStr = String.format(java.util.Locale.getDefault(), "%02d:%02d", hour, minute);
+            tvClockTime.setText(timeStr);
+            
+            int year = cal.get(java.util.Calendar.YEAR);
+            int month = cal.get(java.util.Calendar.MONTH) + 1;
+            int date = cal.get(java.util.Calendar.DAY_OF_MONTH);
+            int dayOfWeek = cal.get(java.util.Calendar.DAY_OF_WEEK);
+            
+            String[] days = {"", "星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"};
+            String dateStr = String.format(java.util.Locale.getDefault(), "%d年%d月%d日 %s", year, month, date, days[dayOfWeek]);
+            tvClockDate.setText(dateStr);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static class AppInfoModel {
