@@ -70,6 +70,7 @@ public class MainActivity extends Activity {
     // Wi-Fi 状态图标组件
     private ImageView ivWifiStatus;
     private WifiReceiver wifiReceiver;
+    private BroadcastReceiver packageReceiver;
 
     private int defaultSourceIndex = 1; 
     private Runnable clockRunnable;
@@ -197,6 +198,7 @@ public class MainActivity extends Activity {
 
         // 动态广播注册，实时刷新 Wi-Fi 强度图标
         registerWifiReceiver();
+        registerPackageReceiver();
 
         scanAllApps();
         renderAppShelf();
@@ -298,6 +300,21 @@ public class MainActivity extends Activity {
         updateWifiStatusIcon(); // 首次主动触发
     }
 
+    private void registerPackageReceiver() {
+        packageReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                scanAllApps();
+                renderAppShelf();
+            }
+        };
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_PACKAGE_ADDED);
+        filter.addAction(Intent.ACTION_PACKAGE_REMOVED);
+        filter.addDataScheme("package");
+        registerReceiver(packageReceiver, filter);
+    }
+
     private void updateWifiStatusIcon() {
         try {
             WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
@@ -340,6 +357,9 @@ public class MainActivity extends Activity {
         }
         if (signalPollRunnable != null) {
             handler.removeCallbacks(signalPollRunnable);
+        }
+        if (packageReceiver != null) {
+            unregisterReceiver(packageReceiver);
         }
     }
 
