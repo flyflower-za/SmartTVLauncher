@@ -62,6 +62,11 @@ public class MainActivity extends Activity {
     
     private LinearLayout appsContainer;
     
+    private TextView tvSourceLabel;
+    private LinearLayout layoutSourceRow;
+    private TextView tvAppsLabel;
+    private boolean showSources = true;
+    
     // Wi-Fi 状态图标组件
     private ImageView ivWifiStatus;
     private WifiReceiver wifiReceiver;
@@ -109,10 +114,17 @@ public class MainActivity extends Activity {
         tvClockTime = (TextView) findViewById(R.id.tv_clock_time);
         tvClockDate = (TextView) findViewById(R.id.tv_clock_date);
 
+        tvSourceLabel = (TextView) findViewById(R.id.tv_source_label);
+        layoutSourceRow = (LinearLayout) findViewById(R.id.layout_source_row);
+        tvAppsLabel = (TextView) findViewById(R.id.tv_apps_label);
+
         // 读取默认源配置
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         defaultSourceIndex = prefs.getInt(KEY_DEFAULT_SOURCE, 1); 
         updateStarIndicators();
+
+        showSources = prefs.getBoolean("show_sources", isWhaleyDevice());
+        applySourcesVisibility();
 
         // 监听焦点自动暂停倒计时
         View.OnFocusChangeListener focusListener = new View.OnFocusChangeListener() {
@@ -403,6 +415,9 @@ public class MainActivity extends Activity {
 
         View allAppsButton = createAllAppsButton();
         appsContainer.addView(allAppsButton);
+
+        View launcherSettingsButton = createLauncherSettingsButton();
+        appsContainer.addView(launcherSettingsButton);
     }
 
     private View createAppItemView(final AppInfoModel app, final int slotIndex) {
@@ -541,6 +556,115 @@ public class MainActivity extends Activity {
         });
 
         return appItem;
+    }
+
+    private View createLauncherSettingsButton() {
+        LinearLayout appItem = new LinearLayout(this);
+        appItem.setOrientation(LinearLayout.VERTICAL);
+        appItem.setGravity(Gravity.CENTER_HORIZONTAL);
+        appItem.setFocusable(true);
+        appItem.setClickable(true);
+        appItem.setBackgroundResource(R.drawable.app_item_selector);
+        
+        int itemWidthPx = (int) (110 * getResources().getDisplayMetrics().density);
+        LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(itemWidthPx, ViewGroup.LayoutParams.WRAP_CONTENT);
+        itemParams.setMargins(10, 10, 10, 10);
+        appItem.setLayoutParams(itemParams);
+        appItem.setPadding(10, 15, 10, 15);
+
+        ImageView ivIcon = new ImageView(this);
+        ivIcon.setImageResource(android.R.drawable.ic_menu_preferences); 
+        ivIcon.setColorFilter(Color.parseColor("#5c6bc0"));
+        int iconSizePx = (int) (64 * getResources().getDisplayMetrics().density);
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(iconSizePx, iconSizePx);
+        ivIcon.setLayoutParams(iconParams);
+        appItem.addView(ivIcon);
+
+        TextView tvName = new TextView(this);
+        tvName.setText("桌面设置");
+        tvName.setTextColor(Color.parseColor("#9ca3af"));
+        tvName.setTextSize(12);
+        tvName.setGravity(Gravity.CENTER_HORIZONTAL);
+        tvName.setSingleLine(true);
+        
+        LinearLayout.LayoutParams nameParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        nameParams.setMargins(0, 8, 0, 0);
+        tvName.setLayoutParams(nameParams);
+        appItem.addView(tvName);
+
+        appItem.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showLauncherSettingsDialog();
+            }
+        });
+
+        appItem.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (hasFocus) {
+                    cancelCountdown();
+                    ((TextView) ((LinearLayout) v).getChildAt(1)).setTextColor(Color.WHITE);
+                } else {
+                    ((TextView) ((LinearLayout) v).getChildAt(1)).setTextColor(Color.parseColor("#9ca3af"));
+                }
+            }
+        });
+
+        return appItem;
+    }
+
+    private void showLauncherSettingsDialog() {
+        cancelCountdown();
+        final SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        boolean currentShow = prefs.getBoolean("show_sources", isWhaleyDevice());
+        
+        String[] options = new String[] { "显示直达与信号源" };
+        final boolean[] checkedItems = new boolean[] { currentShow };
+        
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert);
+        builder.setTitle("桌面设置");
+        builder.setMultiChoiceItems(options, checkedItems, new DialogInterface.OnMultiChoiceClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+                prefs.edit().putBoolean("show_sources", isChecked).commit();
+                showSources = isChecked;
+                applySourcesVisibility();
+            }
+        });
+        builder.setPositiveButton("确定", null);
+        builder.show();
+    }
+
+    private boolean isWhaleyDevice() {
+        try {
+            Class.forName("com.mstar.android.tvapi.common.TvManager");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
+    private void applySourcesVisibility() {
+        if (tvSourceLabel != null && layoutSourceRow != null) {
+            if (showSources) {
+                tvSourceLabel.setVisibility(View.VISIBLE);
+                layoutSourceRow.setVisibility(View.VISIBLE);
+                
+                LinearLayout.LayoutParams labelParams = (LinearLayout.LayoutParams) tvAppsLabel.getLayoutParams();
+                labelParams.topMargin = 0;
+                tvAppsLabel.setLayoutParams(labelParams);
+            } else {
+                tvSourceLabel.setVisibility(View.GONE);
+                layoutSourceRow.setVisibility(View.GONE);
+                
+                LinearLayout.LayoutParams labelParams = (LinearLayout.LayoutParams) tvAppsLabel.getLayoutParams();
+                int marginPx = (int) (120 * getResources().getDisplayMetrics().density);
+                labelParams.topMargin = marginPx;
+                tvAppsLabel.setLayoutParams(labelParams);
+            }
+        }
     }
 
     private void openAppSelectionDialog(final int slotIndex) {

@@ -338,13 +338,56 @@
       border-radius: 50%;
       animation: spin 0.9s linear infinite;
     }
-    .transition-text { font-size: 15px; color: var(--text-sub); letter-spacing: 0.5px; }
+    .settings-option {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      padding: 14px 20px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 14px;
+      font-size: 14px;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+    .settings-option.focused {
+      background: var(--active-card-bg);
+      border-color: var(--accent-color);
+      transform: scale(1.02);
+      box-shadow: 0 4px 15px var(--accent-glow);
+    }
 
     /* ── 动画 ── */
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes zoomIn { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+
+    /* ── 隐藏信号源时的自适应布局优化 ── */
+    body.hide-sources {
+      padding: 40px 60px;
+    }
+    body.hide-sources .row-label {
+      margin-top: auto;
+    }
+    body.hide-sources .apps-container {
+      margin-bottom: auto;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 24px;
+    }
+    body.hide-sources .page-title {
+      font-size: 32px;
+    }
+    body.hide-sources .app-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 20px;
+    }
+    body.hide-sources .app-name {
+      font-size: 15px;
+    }
   </style>
 </head>
 <body>
@@ -374,7 +417,7 @@
   </div>
 
   <!-- 直达与信号源 -->
-  <div class="row-label">直达与信号源</div>
+  <div class="row-label" id="source-row-label">直达与信号源</div>
   <div class="cards-row" id="source-row">
 
     <!-- HDMI 1 -->
@@ -432,6 +475,14 @@
       </div>
       <div class="app-name">全部应用</div>
     </div>
+
+    <!-- 第 7 个固定位：桌面设置入口 -->
+    <div class="app-item item-nav" data-name="桌面设置" id="launcher-settings-btn">
+      <div class="app-icon" style="background-color:#5c6bc0;">
+        <svg viewBox="0 0 24 24"><path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.47,5.34 14.86,5.08L14.47,2.42C14.43,2.18 14.22,2 13.97,2H9.97C9.72,2 9.53,2.18 9.49,2.42L9.1,5.08C8.49,5.34 7.92,5.66 7.4,6.05L4.91,5.05C4.69,4.96 4.42,5.05 4.3,5.27L2.3,8.73C2.18,8.95 2.23,9.22 2.42,9.37L4.53,11C4.49,11.34 4.46,11.67 4.46,12C4.46,12.33 4.49,12.65 4.53,12.97L2.42,14.63C2.23,14.78 2.18,15.05 2.3,15.27L4.3,18.73C4.42,18.95 4.69,19.04 4.91,18.95L7.4,17.95C7.92,18.34 8.49,18.66 9.1,18.92L9.49,21.58C9.53,21.82 9.72,22 9.97,22H13.97C14.22,22 14.43,21.82 14.47,21.58L14.86,18.92C15.47,18.66 16.04,18.34 16.56,17.95L19.05,18.95C19.27,19.04 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>
+      </div>
+      <div class="app-name">桌面设置</div>
+    </div>
   </div>
 
   <!-- 💡 新增：自定义更换应用弹窗 ── -->
@@ -456,6 +507,23 @@
     </div>
   </div>
 
+  <!-- 💡 新增：桌面设置弹窗 ── -->
+  <div class="transition-overlay" id="launcher-settings-modal" style="background: rgba(5, 7, 17, 0.98); display: flex; flex-direction: column; justify-content: center; align-items: center;">
+    <div style="text-align: center; margin-bottom: 30px;">
+      <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">桌面设置</h2>
+      <p style="font-size: 13px; color: var(--text-sub);">使用方向键选择项目，按 Enter 键确认 | 按 M 或 Esc 返回桌面</p>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 14px; width: 320px;" id="settings-options-list">
+      <div class="settings-option" id="opt-toggle-sources">
+        <span>显示直达与信号源</span>
+        <span id="sources-status-indicator" style="color: var(--accent-color); font-weight: 600;">已启用</span>
+      </div>
+      <div class="settings-option" id="opt-close-settings">
+        <span style="width: 100%; text-align: center;">返回桌面</span>
+      </div>
+    </div>
+  </div>
+
   <!-- 底部倒计时 -->
   <div class="footer-countdown" id="countdown-box">
     <div class="countdown-text" id="countdown-text">
@@ -467,7 +535,7 @@
   </div>
 
   <!-- 键盘提示（仅桌面预览可见） -->
-  <div class="keyboard-hint">⌨️ 方向键 ◀ ▶ ▲ ▼ 切换 | Enter 确认 | Space 设为默认源 / 自定义更换应用</div>
+  <div class="keyboard-hint">⌨️ 方向键 ◀ ▶ ▲ ▼ 切换 | Enter 确认 | Space 默认源/替换应用 | M 键桌面设置</div>
 
   <!-- Toast 提示 -->
   <div class="toast" id="toast-msg"></div>
@@ -528,6 +596,11 @@
     const sourceItems = Array.from(sourceRow.children);
     let appItems = Array.from(appsRowEl.children);
     let gridRows = [sourceItems, appItems];
+
+    let showSources = true;
+    let isSettingsOpen = false;
+    let settingsFocusIndex = 0;
+    const settingsModal = document.getElementById('launcher-settings-modal');
 
     let currentRow = 0, currentCol = 0;
     let defaultIndex = 1; // HDMI 2
@@ -723,6 +796,23 @@
     document.addEventListener('keydown', e => {
       cancelCountdown();
       
+      // 桌面设置弹窗打开时的按键处理
+      if (isSettingsOpen) {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          settingsFocusIndex = (settingsFocusIndex === 0) ? 1 : 0;
+          updateSettingsFocus();
+        } else if (e.key === 'Enter') {
+          if (settingsFocusIndex === 0) {
+            toggleSources();
+          } else {
+            closeLauncherSettings();
+          }
+        } else if (e.key === 'Escape' || e.key === 'Back' || e.key === 'm' || e.key === 'M') {
+          closeLauncherSettings();
+        }
+        return;
+      }
+      
       // 全屏应用抽屉打开时的按键处理
       if (isDrawerOpen) {
         const items = Array.from(allAppsGrid.children);
@@ -780,15 +870,18 @@
       }
 
       // 正常主界面按键处理
+      const rowLen = gridRows.length;
       const len = gridRows[currentRow].length;
       if (e.key === 'ArrowRight') updateFocus(currentRow, (currentCol + 1) % len);
       else if (e.key === 'ArrowLeft') updateFocus(currentRow, (currentCol - 1 + len) % len);
-      else if (e.key === 'ArrowDown' && currentRow === 0) updateFocus(1, Math.min(currentCol, appItems.length - 1));
-      else if (e.key === 'ArrowUp'   && currentRow === 1) updateFocus(0, Math.min(currentCol, sourceItems.length - 1));
+      else if (e.key === 'ArrowDown' && rowLen > 1 && currentRow === 0) updateFocus(1, Math.min(currentCol, appItems.length - 1));
+      else if (e.key === 'ArrowUp'   && rowLen > 1 && currentRow === 1) updateFocus(0, Math.min(currentCol, sourceItems.length - 1));
       else if (e.key === 'Enter') {
         const selected = gridRows[currentRow][currentCol];
         if (currentRow === 1 && selected.id === "all-apps-btn") {
           openAllAppsDrawer();
+        } else if (currentRow === 1 && selected.id === "launcher-settings-btn") {
+          openLauncherSettings();
         } else {
           triggerAction(selected);
         }
@@ -800,6 +893,9 @@
           // 在 1-5 个应用插槽按空格，触发自定义选择面板
           openAppPicker(currentCol);
         }
+      }
+      else if (e.key === 'm' || e.key === 'M') {
+        openLauncherSettings();
       }
     });
 
@@ -819,8 +915,87 @@
     }
 
     const allAppsBtn = document.getElementById('all-apps-btn');
-    allAppsBtn.addEventListener('mouseenter', () => { if(!isPickerOpen && !isDrawerOpen){ cancelCountdown(); updateFocus(1, 5); } });
-    allAppsBtn.addEventListener('click', () => { if(!isPickerOpen && !isDrawerOpen) openAllAppsDrawer(); });
+    allAppsBtn.addEventListener('mouseenter', () => { if(!isPickerOpen && !isDrawerOpen && !isSettingsOpen){ cancelCountdown(); updateFocus(1, 5); } });
+    allAppsBtn.addEventListener('click', () => { if(!isPickerOpen && !isDrawerOpen && !isSettingsOpen) openAllAppsDrawer(); });
+
+    const settingsBtn = document.getElementById('launcher-settings-btn');
+    settingsBtn.addEventListener('mouseenter', () => { if(!isPickerOpen && !isDrawerOpen && !isSettingsOpen){ cancelCountdown(); updateFocus(1, 6); } });
+    settingsBtn.addEventListener('click', () => { if(!isPickerOpen && !isDrawerOpen && !isSettingsOpen) openLauncherSettings(); });
+
+    // ── 桌面设置页面逻辑 ──
+    function openLauncherSettings() {
+      cancelCountdown();
+      isSettingsOpen = true;
+      settingsFocusIndex = 0;
+      updateSettingsFocus();
+      settingsModal.classList.add('active');
+    }
+
+    function updateSettingsFocus() {
+      const options = [document.getElementById('opt-toggle-sources'), document.getElementById('opt-close-settings')];
+      options.forEach((opt, idx) => {
+        if (idx === settingsFocusIndex) {
+          opt.classList.add('focused');
+        } else {
+          opt.classList.remove('focused');
+        }
+      });
+    }
+
+    function toggleSources() {
+      showSources = !showSources;
+      localStorage.setItem("show_sources", showSources);
+      applySourcesVisibility();
+      showToast(showSources ? "⭐ 已启用信号源显示" : "⭐ 已隐藏信号源显示");
+    }
+
+    function applySourcesVisibility() {
+      const label = document.getElementById("source-row-label");
+      const row = document.getElementById("source-row");
+      const indicator = document.getElementById("sources-status-indicator");
+      
+      if (showSources) {
+        label.style.display = "";
+        row.style.display = "";
+        document.body.classList.remove("hide-sources");
+        if (indicator) indicator.textContent = "已启用";
+      } else {
+        label.style.display = "none";
+        row.style.display = "none";
+        document.body.classList.add("hide-sources");
+        if (indicator) indicator.textContent = "已隐藏";
+      }
+      
+      updateGridRows();
+    }
+
+    function updateGridRows() {
+      if (showSources) {
+        gridRows = [sourceItems, appItems];
+      } else {
+        gridRows = [appItems];
+      }
+    }
+
+    function closeLauncherSettings() {
+      isSettingsOpen = false;
+      settingsModal.classList.remove('active');
+      if (showSources) {
+        updateFocus(0, 1); // 默认聚焦到 HDMI 2
+      } else {
+        updateFocus(0, 0); // 默认聚焦到第一个应用
+      }
+    }
+
+    function loadSettings() {
+      const saved = localStorage.getItem("show_sources");
+      if (saved !== null) {
+        showSources = (saved === "true");
+      } else {
+        showSources = true;
+      }
+      applySourcesVisibility();
+    }
 
     function updateClock() {
       const timeEl = document.getElementById('clock-time');
@@ -873,7 +1048,15 @@
 
     window.onload = () => {
       loadPinnedApps();
-      updateFocus(0, 1); // 默认聚焦 HDMI 2
+      loadSettings();
+      
+      // Default initial focus setup
+      if (showSources) {
+        updateFocus(0, 1); // 默认聚焦 HDMI 2
+      } else {
+        updateFocus(0, 0); // 默认聚焦第一个应用
+      }
+      
       startCountdown();
       updateClock();
       setInterval(updateClock, 1000);

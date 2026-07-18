@@ -88,6 +88,7 @@
 
     <!-- 直达与信号源行标签 -->
     <TextView
+        android:id="@+id/tv_source_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="直达与信号源 (长按系统设置可一键恢复原厂桌面组件)"
@@ -97,6 +98,7 @@
         android:layout_marginBottom="10dp" />
 
     <LinearLayout
+        android:id="@+id/layout_source_row"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -268,6 +270,7 @@
 
     <!-- 应用抽屉行 -->
     <TextView
+        android:id="@+id/tv_apps_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="已安装应用 (长按遥控确认键可自定义更换固定)"
