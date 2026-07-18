@@ -428,11 +428,18 @@ public class MainActivity extends Activity {
         appItem.setClickable(true);
         appItem.setBackgroundResource(R.drawable.app_item_selector);
         
-        int itemWidthPx = (int) (110 * getResources().getDisplayMetrics().density);
+        int itemWidthDp = showSources ? 110 : 130;
+        int iconSizeDp = showSources ? 64 : 80;
+        int textSizeSp = showSources ? 12 : 14;
+        int paddingDp = showSources ? 15 : 20;
+
+        int itemWidthPx = (int) (itemWidthDp * getResources().getDisplayMetrics().density);
         LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(itemWidthPx, ViewGroup.LayoutParams.WRAP_CONTENT);
         itemParams.setMargins(10, 10, 10, 10);
         appItem.setLayoutParams(itemParams);
-        appItem.setPadding(10, 15, 10, 15);
+        
+        int paddingPx = (int) (paddingDp * getResources().getDisplayMetrics().density);
+        appItem.setPadding(10, paddingPx, 10, paddingPx);
 
         ImageView ivIcon = new ImageView(this);
         if (app != null) {
@@ -440,7 +447,7 @@ public class MainActivity extends Activity {
         } else {
             ivIcon.setImageResource(android.R.drawable.sym_def_app_icon);
         }
-        int iconSizePx = (int) (64 * getResources().getDisplayMetrics().density);
+        int iconSizePx = (int) (iconSizeDp * getResources().getDisplayMetrics().density);
         LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(iconSizePx, iconSizePx);
         ivIcon.setLayoutParams(iconParams);
         appItem.addView(ivIcon);
@@ -448,7 +455,7 @@ public class MainActivity extends Activity {
         TextView tvName = new TextView(this);
         tvName.setText(app != null ? app.label : "待自定义");
         tvName.setTextColor(Color.parseColor("#9ca3af"));
-        tvName.setTextSize(12);
+        tvName.setTextSize(textSizeSp);
         tvName.setGravity(Gravity.CENTER_HORIZONTAL);
         tvName.setSingleLine(true);
         tvName.setEllipsize(android.text.TextUtils.TruncateAt.END);
@@ -509,16 +516,23 @@ public class MainActivity extends Activity {
         appItem.setClickable(true);
         appItem.setBackgroundResource(R.drawable.app_item_selector);
         
-        int itemWidthPx = (int) (110 * getResources().getDisplayMetrics().density);
+        int itemWidthDp = showSources ? 110 : 130;
+        int iconSizeDp = showSources ? 64 : 80;
+        int textSizeSp = showSources ? 12 : 14;
+        int paddingDp = showSources ? 15 : 20;
+
+        int itemWidthPx = (int) (itemWidthDp * getResources().getDisplayMetrics().density);
         LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(itemWidthPx, ViewGroup.LayoutParams.WRAP_CONTENT);
         itemParams.setMargins(10, 10, 10, 10);
         appItem.setLayoutParams(itemParams);
-        appItem.setPadding(10, 15, 10, 15);
+        
+        int paddingPx = (int) (paddingDp * getResources().getDisplayMetrics().density);
+        appItem.setPadding(10, paddingPx, 10, paddingPx);
 
         ImageView ivIcon = new ImageView(this);
-        ivIcon.setImageResource(android.R.drawable.ic_menu_manage); 
+        ivIcon.setImageResource(R.drawable.ic_all_apps); 
         ivIcon.setColorFilter(Color.parseColor("#888899"));
-        int iconSizePx = (int) (64 * getResources().getDisplayMetrics().density);
+        int iconSizePx = (int) (iconSizeDp * getResources().getDisplayMetrics().density);
         LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(iconSizePx, iconSizePx);
         ivIcon.setLayoutParams(iconParams);
         appItem.addView(ivIcon);
@@ -526,7 +540,7 @@ public class MainActivity extends Activity {
         TextView tvName = new TextView(this);
         tvName.setText("全部应用");
         tvName.setTextColor(Color.parseColor("#9ca3af"));
-        tvName.setTextSize(12);
+        tvName.setTextSize(textSizeSp);
         tvName.setGravity(Gravity.CENTER_HORIZONTAL);
         tvName.setSingleLine(true);
         
@@ -566,16 +580,23 @@ public class MainActivity extends Activity {
         appItem.setClickable(true);
         appItem.setBackgroundResource(R.drawable.app_item_selector);
         
-        int itemWidthPx = (int) (110 * getResources().getDisplayMetrics().density);
+        int itemWidthDp = showSources ? 110 : 130;
+        int iconSizeDp = showSources ? 64 : 80;
+        int textSizeSp = showSources ? 12 : 14;
+        int paddingDp = showSources ? 15 : 20;
+
+        int itemWidthPx = (int) (itemWidthDp * getResources().getDisplayMetrics().density);
         LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(itemWidthPx, ViewGroup.LayoutParams.WRAP_CONTENT);
         itemParams.setMargins(10, 10, 10, 10);
         appItem.setLayoutParams(itemParams);
-        appItem.setPadding(10, 15, 10, 15);
+        
+        int paddingPx = (int) (paddingDp * getResources().getDisplayMetrics().density);
+        appItem.setPadding(10, paddingPx, 10, paddingPx);
 
         ImageView ivIcon = new ImageView(this);
-        ivIcon.setImageResource(android.R.drawable.ic_menu_preferences); 
+        ivIcon.setImageResource(R.drawable.ic_launcher_settings); 
         ivIcon.setColorFilter(Color.parseColor("#5c6bc0"));
-        int iconSizePx = (int) (64 * getResources().getDisplayMetrics().density);
+        int iconSizePx = (int) (iconSizeDp * getResources().getDisplayMetrics().density);
         LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(iconSizePx, iconSizePx);
         ivIcon.setLayoutParams(iconParams);
         appItem.addView(ivIcon);
@@ -583,7 +604,7 @@ public class MainActivity extends Activity {
         TextView tvName = new TextView(this);
         tvName.setText("桌面设置");
         tvName.setTextColor(Color.parseColor("#9ca3af"));
-        tvName.setTextSize(12);
+        tvName.setTextSize(textSizeSp);
         tvName.setGravity(Gravity.CENTER_HORIZONTAL);
         tvName.setSingleLine(true);
         
@@ -631,6 +652,7 @@ public class MainActivity extends Activity {
                 prefs.edit().putBoolean("show_sources", isChecked).commit();
                 showSources = isChecked;
                 applySourcesVisibility();
+                renderAppShelf();
             }
         });
         builder.setPositiveButton("确定", null);
