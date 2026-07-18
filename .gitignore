@@ -15,3 +15,6 @@ LauncherProject/res/drawable/wifi_offline.xml
 小红书爆款文案.md
 cover_image.png
 create_cover_image.py
+# 反编译临时目录
+netease_decompiled/
+decompiled_netease_java/

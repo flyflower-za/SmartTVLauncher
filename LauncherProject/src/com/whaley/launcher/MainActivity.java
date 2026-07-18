@@ -810,24 +810,22 @@ public class MainActivity extends Activity {
                         }
                     }
                 });
+                itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        dialog.dismiss();
+                        Intent launchIntent = getPackageManager().getLaunchIntentForPackage(app.packageName);
+                        if (launchIntent != null) {
+                            try {
+                                startActivity(launchIntent);
+                            } catch (Exception e) {
+                                Toast.makeText(MainActivity.this, "启动失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    }
+                });
 
                 return itemView;
-            }
-        });
-
-        gridView.setOnItemClickListener(new android.widget.AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(android.widget.AdapterView<?> parent, View view, int position, long id) {
-                dialog.dismiss();
-                AppInfoModel app = allInstalledApps.get(position);
-                Intent launchIntent = getPackageManager().getLaunchIntentForPackage(app.packageName);
-                if (launchIntent != null) {
-                    try {
-                        startActivity(launchIntent);
-                    } catch (Exception e) {
-                        Toast.makeText(MainActivity.this, "启动失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                }
             }
         });
 
